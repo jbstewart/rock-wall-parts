@@ -216,3 +216,14 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# --- CAD workflow (rock-wall-parts) ---
+# Heavy/regenerable artifacts stay out of git; scripts + source artwork + output DXF/STEP are committed.
+*.stl
+*.3mf
+*.f3d
+*.f3z
+renders/
+*.png
+*.jpg
+.DS_Store
