@@ -16,6 +16,7 @@ Jagged pipe channel floor-to-cap. The top cap course OVERHANGS: cover top must t
 | Bar | 1.5 | 0.5 |
 | Art | `artwork/*final*` (SVG or DXF; ArtLayer.dxf = loud placeholder) | ArtLayer.dxf (single tree) |
 | Rivets | **10** (5 pairs, ~6.6" pitch — matches concept render; set `RIVET_ROWS=3` for a 6-rivet variant, possible Michelle render-choice) | 4 (2 pairs) |
+| Panels cut | 1 face + 1 middle | 1 face + **2 middles** (one per candidate gray texture for Michelle's pick) |
 
 ## Datums / stackup (brick → out)
 
@@ -42,7 +43,7 @@ Window exists ×2 · side bars bear on brick past jag · cover fits under cap li
 
 ## Outputs (one command per config)
 
-STEP assembly (named + colored; Insert CAD into inch design) · face/middle DXFs from the same sketches (Unit.IN; Insert DXF w/ Units=Inch) · frame cut list (miter long-points) + drill schedule · panel drill schedule · drill-map SVG (lettered holes, fractional legend) · BOM (SKUs from lib/hardware filenames; material $ from lib/materials.py price book) · build sheet (fab print + traveler + finish + install §) · CAM sheet (Fusion op settings incl. small-hole recipe) · check report.
+STEP assembly (named + colored; Insert CAD into inch design) · face/middle DXFs from the same sketches (Unit.IN; Insert DXF w/ Units=Inch) · frame cut list (miter long-points) + drill schedule · panel drill schedule · drill-map SVG (lettered holes, fractional legend) · BOM (SKUs from lib/hardware filenames; material $ from lib/materials.py price book) · build sheet (fab print + traveler + finish + install §) · CAM sheet (Fusion op settings incl. small-hole recipe) · program table (gcode name / material / qty / blank W×H rounded UP to 1/2", in both CAM + build sheets) · check report.
 
 ## Open items
 
