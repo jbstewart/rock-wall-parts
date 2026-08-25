@@ -24,11 +24,13 @@ Requirements (the what — technique is yours):
 Face (art cut in) + middle (plain), plasma-cut with 1/8" pilot holes.
 - Clamp face on middle, art side up, edges flush. Drill pilot pairs TOGETHER:
   4x A (9/32"), 6x B (13/64"). Deburr.
+- CAM note: pilots cut as a separate holes-only op — Sideways Comp CENTER,
+  Pierce Clearance 0, minimal lead-in (small holes fail under normal comp).
 
 ## 3. Bench assembly (riveted unit)
 
 - Orientation: face art side OUT, middle gray side toward the art cutout.
-- 6x solid rivet 3/16 x 0.5" brazier (97484A245): insert from the FACE side
+- 4x solid rivet 3/16 x 0.5" brazier (97484A245): insert from the FACE side
   (factory heads show on the face), buck shop heads on the middle's back.
   Shop heads must stand proud no more than ~0.09" (they nest in the frame reliefs).
 

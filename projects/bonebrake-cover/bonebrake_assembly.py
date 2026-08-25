@@ -113,8 +113,12 @@ OUT_STEP = OUT_DIR / f"{BASENAME}-assembly.step"
 # Plasma can't cut clean holes near material thickness — panel DXFs carry small
 # PILOT circles at every hole position (plasma cuts them rough, Jimmie drills to
 # final size per the panel drill schedule). The 3D solids show finished holes.
-# Pilot must exceed ~2x kerf or CAM refuses the inside profile (1/16 failed).
+# Pilots cut with the small-hole CAM recipe (DECIDED 2026-08-25): a separate
+# holes-only 2D Profile op with Sideways Compensation = CENTER and Pierce
+# Clearance = 0, minimal lead-in. Under that recipe the floor is ~2x kerf.
+# Normal-comp inside profiles need >= PLASMA_MIN_HOLE (~3/16 on the ArcDroid).
 PLASMA_KERF = 0.055
+PLASMA_MIN_HOLE = 0.1875   # normal-comp ops only; pilots use the center-comp recipe
 PILOT_DIA = 0.125
 
 # Artwork cut into the face layer. Coupon uses the original tree; the real
@@ -137,7 +141,11 @@ def corner_pattern() -> list[tuple[float, float]]:
     return [(-x, y), (x, y), (-x, -y), (x, -y)]
 
 
-RIVET_SPACING_TARGET = 8.0  # rows derived from height (Michelle's render ~5 pairs)
+RIVET_SPACING_TARGET = 8.0  # rows derived from height unless overridden
+# Coupon: 4 rivets total. Real: height-derived = 5 pairs (10), matching the
+# concept render — DECIDED 2026-08-25. Possible Michelle choice later: set
+# `3` here for the 6-rivet variant, render both, let her pick.
+RIVET_ROWS = 2 if COUPON else None
 
 
 def rivet_pattern() -> list[tuple[float, float]]:
@@ -145,7 +153,7 @@ def rivet_pattern() -> list[tuple[float, float]]:
     x = W / 2 - BAR / 2
     y_top = H / 2 - CORNER_INSET
     span = 2 * y_top
-    rows = max(3, round(span / RIVET_SPACING_TARGET))
+    rows = RIVET_ROWS if RIVET_ROWS else max(3, round(span / RIVET_SPACING_TARGET))
     step = span / (rows + 1)
     ys = [-y_top + step * (i + 1) for i in range(rows)]
     return [(sx, y) for y in ys for sx in (-x, x)]
@@ -450,14 +458,14 @@ def run_checks(art=None) -> list[tuple[str, bool, str]]:
             f"hole {frac(BOLT_CLEAR_DIA)} > major {SCREWS[BOLT]['major_dia']:.3f}",
         ),
         (
-            "pilot is plasma-cuttable (>= 2x kerf)",
+            "pilot cuttable under center-comp recipe (>= 2x kerf)",
             PILOT_DIA >= 2 * PLASMA_KERF,
-            f"pilot {frac(PILOT_DIA)} >= 2 x kerf {PLASMA_KERF:.3f}",
+            f"pilot {frac(PILOT_DIA)} >= 2 x kerf {PLASMA_KERF:.3f} (center-comp, pierce clearance 0)",
         ),
         (
-            "pilot smaller than every finish drill",
-            PILOT_DIA <= min(RIVET_HOLE_DIA, TAP_DRILL_DIA, BOLT_CLEAR_DIA) - 0.05,
-            f"pilot {frac(PILOT_DIA)} <= smallest finish {frac(min(RIVET_HOLE_DIA, TAP_DRILL_DIA, BOLT_CLEAR_DIA))} - 0.05",
+            "pilot under every finish drill (light cleanup accepted)",
+            PILOT_DIA <= min(RIVET_HOLE_DIA, TAP_DRILL_DIA, BOLT_CLEAR_DIA) - 0.01,
+            f"pilot {frac(PILOT_DIA)} <= smallest finish {frac(min(RIVET_HOLE_DIA, TAP_DRILL_DIA, BOLT_CLEAR_DIA))} - 0.01",
         ),
         (
             "artwork clears every fastener hole",
@@ -517,7 +525,8 @@ def write_bom(out_path: Path) -> Path:
         (f"Bolt, {BOLT} x 1/2 flanged button head hex, black-oxide", "unit → frame",
          "4 (pack of 25 on order)", f"McMaster {catalog_sku(BOLT_MODEL)}"),
         (f'Solid rivet, {RIVET_SIZE} x {RIVET_LEN:.2g}" brazier head, aluminum',
-         "face+middle (bucked)", "6 + spares", f"McMaster {catalog_sku(RIVET_MODEL)} / Amazon on hand"),
+         "face+middle (bucked)", f"{len(rivet_pattern())} + spares",
+         f"McMaster {catalog_sku(RIVET_MODEL)} / Amazon on hand"),
         ('Tapcon 1/4" x 1-1/4" flat Phillips head (masonry screw)', "frame → brick (on-site)",
          "4 (box incl. 3/16 carbide pilot bit)", "hardware store"),
         ("Spray: hammered black (face + frame); satin light gray (middle)", "finish",
@@ -572,11 +581,13 @@ Requirements (the what — technique is yours):
 Face (art cut in) + middle (plain), plasma-cut with {frac(PILOT_DIA)}" pilot holes.
 - Clamp face on middle, art side up, edges flush. Drill pilot pairs TOGETHER:
   4x A ({frac(BOLT_CLEAR_DIA)}"), 6x B ({frac(RIVET_HOLE_DIA)}"). Deburr.
+- CAM note: pilots cut as a separate holes-only op — Sideways Comp CENTER,
+  Pierce Clearance 0, minimal lead-in (small holes fail under normal comp).
 
 ## 3. Bench assembly (riveted unit)
 
 - Orientation: face art side OUT, middle gray side toward the art cutout.
-- 6x solid rivet {RIVET_SIZE} x {RIVET_LEN:.2g}" brazier ({rivet_sku}): insert from the FACE side
+- {len(rivet_pattern())}x solid rivet {RIVET_SIZE} x {RIVET_LEN:.2g}" brazier ({rivet_sku}): insert from the FACE side
   (factory heads show on the face), buck shop heads on the middle's back.
   Shop heads must stand proud no more than ~{SHOP_HEAD_H:.2f}" (they nest in the frame reliefs).
 

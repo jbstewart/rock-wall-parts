@@ -30,6 +30,7 @@ The venv is ~700 MB on disk (OpenCascade wheel) and gitignored.
 4. **Fusion import gotchas (both bitten once):** STEP — use Insert CAD into an inch design (direct Open adopts the file's mm). DXF — Insert DXF's Units dropdown defaults to document units, not the file's; set it to Inch explicitly.
 5. **Verify in Fusion before CAM.** Until a script has matched a hand-built model on a real job, Fusion is the source of truth and the script is the shadow experiment.
 6. Kerf compensation is CAM's job — geometry in this repo is always nominal. Current chain: generated DXF → Fusion sketch import → Fusion CAM (Brian: tools, kerf comp, post) → G-code to Jimmie's ArcDroid.
+7. **Small-hole CAM recipe** (pilot circles): separate holes-only 2D Profile op with Sideways Compensation = Center, Pierce Clearance = 0, minimal lead-in. Normal compensation refuses holes below ~3/16 (and the default 0.059 pierce clearance can't fit inside them).
 
 ## Commit policy
 
