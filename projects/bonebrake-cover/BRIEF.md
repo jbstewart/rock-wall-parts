@@ -43,7 +43,7 @@ Window exists ×2 · side bars bear on brick past jag · cover fits under cap li
 
 ## Outputs (one command per config)
 
-STEP assembly (named + colored; Insert CAD into inch design) · face/middle DXFs from the same sketches (Unit.IN; Insert DXF w/ Units=Inch) · frame cut list (miter long-points) + drill schedule · panel drill schedule · drill-map SVG (lettered holes, fractional legend) · BOM (SKUs from lib/hardware filenames; material $ from lib/materials.py price book) · build sheet (fab print + traveler + finish + install §) · CAM sheet (Fusion op settings incl. small-hole recipe) · program table (gcode name / material / qty / blank W×H rounded UP to 1/2", in both CAM + build sheets) · check report.
+STEP assembly (named + colored; Insert CAD into inch design) · face/middle DXFs from the same sketches (Unit.IN; Insert DXF w/ Units=Inch) · frame cut list (miter long-points) + drill schedule · panel drill schedule · drill-map PDF (lettered holes, fractional legend; PDF so it attaches to the PPBO Job as a document, not an image) · BOM (SKUs from lib/hardware filenames; material $ from lib/materials.py price book) · build sheet (fab print + traveler + finish + install §) · CAM sheet (Fusion op settings incl. small-hole recipe) · program table (gcode name / material / qty / blank W×H rounded UP to 1/2", in both CAM + build sheets) · check report.
 
 ## Open items
 

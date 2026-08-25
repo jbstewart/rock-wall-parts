@@ -1,3 +1,4 @@
 build123d>=0.9
 ezdxf>=1.3
 pillow>=10  # ezdxf drawing add-on (SVG previews)
+reportlab>=4  # drill-map PDF (lib/drillmap.py)
