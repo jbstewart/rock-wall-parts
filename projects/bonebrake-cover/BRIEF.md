@@ -2,6 +2,8 @@
 
 Spec for `bonebrake_assembly.py` (dual-config: default = real cover, `coupon` arg = test coupon → `output/coupon/`, self-named files). All inches. Current as of 2026-08-25.
 
+Current revision: **A** — the script's `REV` must match this line (generation check); every output filename carries `revA`, and Fusion-posted gcode must be named to match. Bump on any form/fit/function change (dimensions, holes, patterns, material, finish, artwork); letters skip I O Q S X Z per ASME Y14.35. On release: attach new-rev files to the PPBO Job and remove the superseded ones. History at bottom.
+
 ## Site (Michelle Bonebrake, 887 W 330 S, Logan — indoor brick wall)
 
 Jagged pipe channel floor-to-cap. The top cap course OVERHANGS: cover top must tuck under the lip (no slop up); carpet hides shortfall at the floor — install slides UP tight. Side bars carry ALL brick bearing (top/bottom bars bridge the channel). **VERIFY on site:** widest jag anywhere (≤5.5" keeps W=9) and minimum under-cap height at L/C/R (≥41.5 keeps H=41.25). Encoded as `OPENING_W` / `UNDER_CAP_H` with bearing + fit checks.
@@ -32,18 +34,24 @@ Hammered black on face + frame (forge texture, hides mill scale; powder coat $10
 
 ## Plasma / CAM
 
-Panel DXF holes are **1/8" PILOTS** (drilled to final per schedules; clamp face+middle, drill pairs together). Pilots cut via the **small-hole CAM recipe**: separate holes-only 2D Profile op, Sideways Comp = CENTER, Pierce Clearance = 0, minimal lead-in (normal comp refuses < ~3/16; default 0.059 pierce clearance can't fit). Art + outline = normal op. Kerf stays in CAM.
+Panel DXF holes are **1/8" PILOTS** (drilled to final per schedules; clamp face+middle, drill pairs together). Pilots cut via the **small-hole CAM recipe** (settings finalized 2026-08-25): separate holes-only 2D Profile op, Passes→Sideways Comp = CENTER, Linking tab: Leads→Lead-In (Entry) + Lead-Out (Exit) both UNCHECKED, Piercing→Pierce Clearance = 0 (normal comp refuses < ~3/16; default 0.059 pierce clearance can't fit). Art + outline = normal op. Kerf stays in CAM. Full per-op setup is the generated **CAM sheet** (`…-camsheet-revX.md`) — set up Fusion from it, not from memory.
 
-## Validation (16 checks gate generation)
+## Validation (17 checks gate generation)
 
-Window exists ×2 · side bars bear on brick past jag · cover fits under cap lip · rivet tail 1.3–1.7d · shop head hides in frame · shop head clears relief · rivet holes land on bar · bolt not into brick · ≥2 threads engaged · corner holes on bar · rivet snug fit (0 < slop ≤ 0.02) · bolt clearance clears major · pilot ≥ 2× kerf (center-comp recipe) · pilot ≤ smallest finish − 0.01 · artwork clears every fastener keep-out (kernel boolean, auto-backoff fit).
+Window exists ×2 · side bars bear on brick past jag · cover fits under cap lip · rivet tail 1.3–1.7d · shop head hides in frame · shop head clears relief · rivet holes land on bar · bolt not into brick · ≥2 threads engaged · corner holes on bar · rivet snug fit (0 < slop ≤ 0.02) · bolt clearance clears major · pilot ≥ 2× kerf (center-comp recipe) · pilot ≤ smallest finish − 0.01 · artwork clears every fastener keep-out (kernel boolean, auto-backoff fit) · BRIEF current revision matches script `REV`.
 
 ## Outputs (one command per config)
 
-STEP assembly (named + colored; Insert CAD into inch design) · face/middle DXFs from the same sketches (Unit.IN; Insert DXF w/ Units=Inch) · frame cut list (miter long-points) + drill schedule · panel drill schedule · drill-map SVG (lettered holes, fractional legend) · BOM (SKUs from lib/hardware filenames; material $ from lib/materials.py price book) · build sheet (fab print + traveler + finish + install §) · check report.
+STEP assembly (named + colored; Insert CAD into inch design) · face/middle DXFs from the same sketches (Unit.IN; Insert DXF w/ Units=Inch) · frame cut list (miter long-points) + drill schedule · panel drill schedule · drill-map SVG (lettered holes, fractional legend) · BOM (SKUs from lib/hardware filenames; material $ from lib/materials.py price book) · build sheet (fab print + traveler + finish + install §) · CAM sheet (Fusion op settings incl. small-hole recipe) · check report.
 
 ## Open items
 
 1. Site tape visit (Thu task in PPBO/rock-wall-forge): jag width, under-cap min, Michelle's email, coupon show-and-tell.
 2. Michelle questionnaire: backer texture, rivet finish, (maybe) 10-vs-6 rivet renders.
 3. Quote via PPBO after answers — 50% deposit, balance on install, ACH-preferred.
+
+## Revision history
+
+| Rev | Date | Change |
+|---|---|---|
+| A | 2026-08-25 | Initial release under revision control (design state as specified above: 9 × 41.25 provisional, 10 rivets, hammered black / gray texture TBD). |
