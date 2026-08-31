@@ -1,6 +1,6 @@
 # Agent guidance — rock-wall-parts
 
-Parametric code-CAD parts library for Rock Wall Forge / Rock Wall Manufacturing (Brian Stewart's shop). Read `README.md` for the workflow; each job's `projects/<job>/BRIEF.md` is that job's spec and decision log.
+Parametric code-CAD parts library for Rock Wall Forge / Rock Wall Manufacturing (Brian Stewart's shop). Read `README.md` for the workflow; each job's `projects/<job>/BRIEF.md` is that job's spec and decision log. `docs/PROCESS.md` is the outsider-facing pipeline summary (also fed to other AI assistants) — keep it in sync when conventions here change.
 
 ## How to work here
 
