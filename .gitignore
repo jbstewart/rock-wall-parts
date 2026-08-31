@@ -7,6 +7,9 @@ __pycache__/
 *.so
 
 # Distribution / packaging
+# NOTE: the boilerplate `lib/` and `parts/` entries are deliberately removed —
+# they silently ignored this repo's lib/ source tree (caught 2026-08-30, when
+# git ls-files showed lib/ had NEVER been committed).
 .Python
 build/
 develop-eggs/
@@ -14,9 +17,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
 lib64/
-parts/
 sdist/
 var/
 wheels/
@@ -227,3 +228,4 @@ renders/
 *.png
 *.jpg
 .DS_Store
+FOR_DELETION/
