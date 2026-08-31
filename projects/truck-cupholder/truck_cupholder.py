@@ -30,6 +30,7 @@ from build123d import (  # noqa: E402
     Plane,
     Polygon,
     Pos,
+    Rectangle,
     Rot,
     export_step,
     export_stl,
@@ -40,7 +41,7 @@ from build123d import (  # noqa: E402
 # All inches; STEP exports scale x25.4 via place(). z=0 is the flange seat
 # (top of upholstery), +z up, origin centered between the two bores.
 
-REV = "A"
+REV = "B"
 
 # Seat recess (SilveradoCupHolder Drawing.pdf + corrected worksheet)
 BORE_CC = 3.75          # bore / recess circle centers
@@ -74,7 +75,8 @@ DRAIN_R = 0.125
 
 # Snap clips (4) — engage under the plate, 45-deg-ish ramps both ways
 CLIP_CC = 3.625         # hook centers; check proves fit for both measured pocket c-c (3.5 & 3.75)
-CLIP_W = 0.70
+CLIP_W = 0.60           # Rev B: narrowed from 0.70 so the hook's outer corner stays
+                        # close to the stadium's straight wall (corner curve costs deflection)
 CLIP_T = 0.065          # tongue thickness (~4 perimeters of a 0.4 nozzle)
 CLIP_GAP = 0.06         # window side/back gaps around the tongue
 PLATE_CLR = 0.03        # hook top sits this far below the plate underside
@@ -153,15 +155,24 @@ def sector(r1: float, r2: float, a1: float, a2: float, z1: float, z2: float):
     return Pos(0, 0, z1) * extrude(ring & tri, z2 - z1)
 
 
-def figure8(r: float):
-    return Pos(-BORE_CC / 2, 0) * Circle(r) + Pos(BORE_CC / 2, 0) * Circle(r)
+def stadium(r: float):
+    """Two circles joined by a full-height rectangle — the recess is a STADIUM,
+    not a figure-8 (Rev B: Brian's drawing; a bare circle-union pinches to ~1"
+    at the waist and left the recess visible mid-span on both sides)."""
+    return (
+        Rectangle(BORE_CC, 2 * r)
+        + Pos(-BORE_CC / 2, 0) * Circle(r)
+        + Pos(BORE_CC / 2, 0) * Circle(r)
+    )
 
 
 # --------------------------------------------------------------- BASE
 
-# Tongue face is the chord plane whose corners land ON the plug wall — flat
-# tongue, nothing proud of the plug except the hook itself.
-TONGUE_FACE_R = (PLUG_R**2 - (CLIP_W / 2) ** 2) ** 0.5  # 1.918
+# The clip's outer corner reaches past the stadium's straight section into the
+# end-circle curve; the tongue face sits flush with the wall at that corner
+# (slightly recessed along the straight run), so nothing but the hook is proud.
+CLIP_CORNER_OFF = max(0.0, CLIP_CC / 2 + CLIP_W / 2 - BORE_CC / 2)
+TONGUE_FACE_R = (PLUG_R**2 - CLIP_CORNER_OFF**2) ** 0.5
 
 
 def clip_tongue():
@@ -214,9 +225,9 @@ def bayonet_cuts_left():
 
 
 def build_base_full():
-    """The whole base, unsplit, in the global frame (wells at +-BORE_CC/2)."""
-    flange = extrude(figure8(FLANGE_R), FLANGE_T)
-    plug = Pos(0, 0, PLUG_BOTTOM) * extrude(figure8(PLUG_R), -PLUG_BOTTOM)
+    """The whole base, one piece, in the global frame (wells at +-BORE_CC/2)."""
+    flange = extrude(stadium(FLANGE_R), FLANGE_T)
+    plug = Pos(0, 0, PLUG_BOTTOM) * extrude(stadium(PLUG_R), -PLUG_BOTTOM)
     base = flange + plug
 
     for sx in (-1, 1):
@@ -302,7 +313,10 @@ def bbox_xy_in(shape) -> tuple[float, float]:
 
 
 def run_checks(base_full, collar, cups_placed, collars_placed):
-    deflect = HOOK_TIP_R - (HOLE_D / 2 - INSERT_CLR)
+    # Worst-case snap-in deflection is at the clip's OUTER corner, where the
+    # stadium's end-circle pulls the plate edge inward (Rev B).
+    plate_edge_min = (HOLE_D**2 / 4 - CLIP_CORNER_OFF**2) ** 0.5
+    deflect = HOOK_TIP_R - (plate_edge_min - INSERT_CLR)
     hook_mid_z = (HOOK_TOP_Z + HOOK_TIP_Z) / 2
     strain = 1.5 * CLIP_T * deflect / hook_mid_z**2
     hook_lo, hook_hi = CLIP_CC / 2 - CLIP_W / 2, CLIP_CC / 2 + CLIP_W / 2
@@ -315,6 +329,13 @@ def run_checks(base_full, collar, cups_placed, collars_placed):
     col_bb = collar.bounding_box()
     col_xy = max(col_bb.size.X, col_bb.size.Y)
     base_top = base_bb.max.Z
+    # kernel coverage: the fabric opening (its own stadium, conveniently on the
+    # same 3.75 centers), grown by the required margin, must vanish under the
+    # flange footprint — bbox comparison provably isn't enough here
+    fabric_grown = stadium(FABRIC_W / 2 + 0.15)
+    leftover = fabric_grown - stadium(FLANGE_R)
+    uncovered_area = getattr(leftover, "area", 0.0) or 0.0
+    flange_covers = uncovered_area < 1e-6
     # the -X extrude bug (Rev A dev) left the hook detached; prove the tongue
     # is one connected solid living entirely inside the clip width
     tongue = clip_tongue()
@@ -336,9 +357,9 @@ def run_checks(base_full, collar, cups_placed, collars_placed):
          f"lowest point {TONGUE_BOT:.2f} >= {-(RECESS_DEPTH - 0.02):.2f}"),
         ("base folds into the seatback", base_top <= FOLD_LIMIT,
          f"base stands {base_top:.3f} above fabric <= {FOLD_LIMIT}"),
-        ("flange covers the fabric opening", 2 * FLANGE_R >= FABRIC_W + 0.4
-         and BORE_CC + 2 * FLANGE_R >= FABRIC_L + 0.4,
-         f"flange 8-fig {BORE_CC + 2 * FLANGE_R:.2f} x {2 * FLANGE_R:.2f} vs fabric {FABRIC_L} x {FABRIC_W} + 0.2/side"),
+        ("flange covers the fabric opening EVERYWHERE (kernel)", flange_covers,
+         f"(fabric stadium grown 0.15) - flange = {uncovered_area:.6f} in² "
+         "(Rev A's bbox-only check missed the waist gap — Brian caught it)"),
         ("hook engages under the plate", 0.02 <= -(HOOK_TOP_Z + LEDGE) <= 0.08,
          f"hook top {HOOK_TOP_Z:.2f}, plate underside {-LEDGE:.2f} (clr {-(HOOK_TOP_Z + LEDGE):.3f})"),
         ("hook bite is real but insertable", 0.06 <= HOOK_ENG <= POCKET_OUT - 0.02,

@@ -1,6 +1,6 @@
 # Truck cup holder — BRIEF
 
-Current revision: **A**
+Current revision: **B**
 
 Replacement for the worn OEM dual cup holder insert in the fold-down center armrest of Brian's Silverado bench seat. 3D printed (PETG), personal part — no plasma/weld pipeline, no PPBO job. Source measurements: `MEASUREMENTS.md` (Brian, calipers, 2026-08-30) and `SilveradoCupHolder Drawing.pdf` (Brian's CAD of the foam recess).
 
@@ -12,7 +12,7 @@ The OEM insert (shallow oval tray, ~1.75" bores) fails two ways: bores are too w
 
 Two-piece system, two unique printed parts (base ×1, collar ×2):
 
-- **Base** (stays snapped into the platform): **one-piece** figure-8 plug matching the recess (the ~8.25"/211 mm flange fits the confirmed CR-6 SE bed; an earlier two-half split existed only for a feared 150 mm bed and was dropped 2026-08-30). Four fresh cantilever snap hooks engage under the embedded plate (ramped both ways → removable with a firm pull, but it normally never comes out). Each bore is a shallow well (cup floor 0.55 below flange) with a drain hole.
+- **Base** (stays snapped into the platform): **one-piece stadium** plug matching the recess (Rev B — the recess is two circles JOINED BY A RECTANGLE per the drawing, not a bare circle union; Rev A's figure-8 pinched at the waist, exposing the recess mid-span on both sides) (the ~8.25"/211 mm flange fits the confirmed CR-6 SE bed; an earlier two-half split existed only for a feared 150 mm bed and was dropped 2026-08-30). Four fresh cantilever snap hooks engage under the embedded plate (ramped both ways → removable with a firm pull, but it normally never comes out). Each bore is a shallow well (cup floor 0.55 below flange) with a drain hole.
 - **Collar** (superstructure, quantity 2, identical parts): a ~3"-tall tapered tube per cup that supports the tumbler at its full taper-top diameter (3.5"). Each collar **bayonet twist-locks** into its well — lugs drop into entry slots near the outboard end, twist ~25° toward lock. To seat a third passenger: two quarter-ish twists, lift both collars, fold the platform; the base stays put.
 - Collars are one part used twice: rotating the part 180° serves the mirrored position (lugs at 135°/315° are C2-symmetric; the waist-facing scallop swaps sides correctly).
 
@@ -22,7 +22,7 @@ Why a scallop on each collar: two 3.5" cups on 3.75" centers nearly touch — ea
 
 ## Key measurements adopted (and reconciliations)
 
-- Recess: figure-8, circle Ø3.96 (7.71 overall − 3.75 c-c, per drawing), depth 0.75. Fabric opening 7.75 × 4.
+- Recess: **stadium** — circles Ø3.96 on 3.75 centers joined by a full-height rectangle (7.71 × 3.96 overall, per drawing), depth 0.75. Fabric opening 7.75 × 4 (also a stadium). Flange coverage is kernel-verified everywhere, not bbox-compared (Rev A bug).
 - Retention plate: 1/8 thick; **hook ledge (plate underside) at 0.50 below the flange seat** (Brian's corrected measurement 2026-08-30 — the worksheet's 11/32 + 1/16 entries superseded).
 - **Fold constraint (2026-08-30): the base may stand no more than 1.25 above the fabric** or the platform won't fold into the seatback (generation check). Collars are exempt — they come off before folding.
 - Clip pockets: 4 side pockets 1.0 wide, extending 0.38 radially past the hole edge, 0.5 deep below the plate. Drawing implies pocket c-c ≈3.5; worksheet says 3.75. **Hooks sit at c-c 3.625, 0.70 wide** — a generation check proves they land inside the pockets under BOTH interpretations. The drawing's small end notch (0.75 × 0.09) is unused.
@@ -44,4 +44,5 @@ Why a scallop on each collar: two 3.5" cups on 3.75" centers nearly touch — ea
 
 | Rev | Date | Change |
 |---|---|---|
-| A | 2026-08-30 | Initial design: two-half snap-in base + two twist-lock collars. |
+| A | 2026-08-30 | Initial design: snap-in base + two twist-lock collars (base became one piece once the CR-6 SE was confirmed). Coupons shared to the neighbor via PPBO. |
+| B | 2026-08-30 | Base footprint figure-8 → **stadium** (Brian: the recess drawing joins the circles with a rectangle; the figure-8 waist exposed the recess mid-span — cosmetic + debris trap). Flange-coverage check upgraded from bbox to kernel boolean. Clips narrowed 0.70 → 0.60 (outer corner rides the stadium's end curve; keeps snap-in strain at 3.1%). **Re-share revB coupon files on the PPBO Job** — revA copies are with the neighbor. |
