@@ -2,7 +2,7 @@
 
 Spec for `bonebrake_assembly.py` (dual-config: default = real cover, `coupon` arg = test coupon → `output/coupon/`, self-named files). All inches. Current as of 2026-08-25.
 
-Current revision: **A** — the script's `REV` must match this line (generation check); every output filename carries `revA`, and Fusion-posted gcode must be named to match. Bump on any form/fit/function change (dimensions, holes, patterns, material, finish, artwork); letters skip I O Q S X Z per ASME Y14.35. On release: attach new-rev files to the PPBO Job and remove the superseded ones. History at bottom.
+Current revision: **B** — the script's `REV` must match this line (generation check); every output filename carries `revA`, and Fusion-posted gcode must be named to match. Bump on any form/fit/function change (dimensions, holes, patterns, material, finish, artwork); letters skip I O Q S X Z per ASME Y14.35. On release: attach new-rev files to the PPBO Job and remove the superseded ones. History at bottom.
 
 ## Site (Michelle Bonebrake, 887 W 330 S, Logan — indoor brick wall)
 
@@ -26,8 +26,9 @@ Origin = center of frame back face; +Z out of brick. Frame 0.25×BAR flat bar, m
 
 - **Frame → brick:** 4× Tapcon 1/4" × 1-1/4" flat Phillips (frame permanent; service = corner bolts; SDS on site). Frame: 9/32 + 82° countersink, drilled ON-SITE (positions installer's choice, side bars only — clear of C/D holes, 1"+ from brick edges). NOT in fab outputs.
 - **Face+middle (riveted unit):** 3/16 × 1/2 aluminum SOLID brazier rivets (McMaster 97484A245 / Amazon on hand; 3/8-length fails tail check at 0.67d). Bucked on the bench — factory heads on face, shop heads (~0.281 × 0.094) nest in frame reliefs. Panel holes **13/64** (snug; shank swells). Tail = 1.33d ✓.
-- **Unit → frame:** 4× 1/4-20 × 1/2 black-oxide flanged button-head hex (91355A081; flange = built-in washer for 11ga; coarse over 1/4-28: standard tap + cheaper). Panels: **9/32** clearance (rounds UP). Frame corners: tap drill **13/64** → tapped 1/4-20, 5 threads. Same 13/64 bit as the rivet holes. Flush at nominal 0.500 stack.
-- Frame rivet reliefs: **11/32** (shop heads clear + hide inside bar).
+- **Unit → frame:** 4× **5/16-18 × 1/2** flanged button-head hex (Rev B — sourced locally 2026-08-30; Brian judged 5/16 heads better proportioned than the original 1/4-20 91355A081. **VERIFY purchased length is 1/2** — longer fails the brick-protrusion check). Panels: **11/32** clearance (rounds UP, +0.031 over major). Frame corners: tap drill **17/64** → tapped 5/16-18, 4.5 threads. Flush at nominal 0.500 stack. Purchased length **verified 1/2, black oxide** (2026-08-30). Catalog STEP in lib/hardware/ (91255A578 equivalent; dimensions kernel-verified: head Ø0.546, OAL 0.666).
+- Frame rivet reliefs: **11/32** (shop heads clear + hide inside bar) — same bit as the bolt clearance (A + D share, Rev B).
+- **Fastener edge inset (Rev B, coupon lesson):** every rivet and corner-bolt center sits **≥ 3/4"** from the panel edges — the coupon's BAR/2 inset (0.25) left no room to drill the frame relief holes. Generation check; coupon config exempt (already cut).
 
 ## Finish (DECIDED)
 
@@ -37,13 +38,13 @@ Hammered black on face + frame (forge texture, hides mill scale; powder coat $10
 
 Panel DXF holes are **1/8" PILOTS** (drilled to final per schedules; clamp face+middle, drill pairs together). Pilots cut via the **small-hole CAM recipe** (settings finalized 2026-08-25): separate holes-only 2D Profile op, Passes→Sideways Comp = CENTER, Linking tab: Leads→Lead-In (Entry) + Lead-Out (Exit) both UNCHECKED, Piercing→Pierce Clearance = 0 (normal comp refuses < ~3/16; default 0.059 pierce clearance can't fit). Art + outline = normal op. Kerf stays in CAM. Full per-op setup is the generated **CAM sheet** (`…-camsheet-revX.md`) — set up Fusion from it, not from memory.
 
-## Validation (17 checks gate generation)
+## Validation (18 checks gate generation)
 
-Window exists ×2 · side bars bear on brick past jag · cover fits under cap lip · rivet tail 1.3–1.7d · shop head hides in frame · shop head clears relief · rivet holes land on bar · bolt not into brick · ≥2 threads engaged · corner holes on bar · rivet snug fit (0 < slop ≤ 0.02) · bolt clearance clears major · pilot ≥ 2× kerf (center-comp recipe) · pilot ≤ smallest finish − 0.01 · artwork clears every fastener keep-out (kernel boolean, auto-backoff fit) · BRIEF current revision matches script `REV`.
+Window exists ×2 · side bars bear on brick past jag · cover fits under cap lip · rivet tail 1.3–1.7d · shop head hides in frame · shop head clears relief · rivet holes land on bar · fastener centers ≥ 3/4 from edges (Rev B) · bolt not into brick · ≥2 threads engaged · corner holes on bar · rivet snug fit (0 < slop ≤ 0.02) · bolt clearance clears major · pilot ≥ 2× kerf (center-comp recipe) · pilot ≤ smallest finish − 0.01 · artwork clears every fastener keep-out (kernel boolean, auto-backoff fit) · BRIEF current revision matches script `REV`.
 
 ## Outputs (one command per config)
 
-STEP assembly (named + colored; Insert CAD into inch design) · face/middle DXFs from the same sketches (Unit.IN; Insert DXF w/ Units=Inch) · frame cut list (miter long-points) + drill schedule · panel drill schedule · drill-map PDF (lettered holes, fractional legend; PDF so it attaches to the PPBO Job as a document, not an image) · BOM (SKUs from lib/hardware filenames; material $ from lib/materials.py price book) · build sheet (fab print + traveler + finish + install §) · CAM sheet (Fusion op settings incl. small-hole recipe) · program table (gcode name / material / qty / blank W×H rounded UP to 1/2", in both CAM + build sheets) · check report.
+STEP assembly (named + colored; Insert CAD into inch design) · face/middle DXFs from the same sketches (Unit.IN; Insert DXF w/ Units=Inch) · frame cut list (miter long-points) + drill schedule · panel drill schedule · drill-map PDF (lettered holes, fractional legend; PDF so it attaches to the PPBO Job as a document, not an image) · BOM (SKUs from lib/hardware filenames; material $ from lib/materials.py price book) · build sheet (fab print + traveler + finish + install §) · CAM sheet (Fusion op settings incl. small-hole recipe) · program table (gcode name / material / qty / blank W×H rounded UP to 1/2", in both CAM + build sheets) · check report · customer render (`render_assembly.py` → PNG, gitignored presentation aid, NOT a fab document — layered paint order, not depth-sorted).
 
 ## Open items
 
@@ -53,6 +54,9 @@ STEP assembly (named + colored; Insert CAD into inch design) · face/middle DXFs
 
 ## Revision history
 
-| Rev | Date | Change |
-|---|---|---|
-| A | 2026-08-25 | Initial release under revision control (design state as specified above: 9 × 41.25 provisional, 10 rivets, hammered black / gray texture TBD). |
+Release commit = the commit that adds this rev's outputs (and removes the superseded ones); fill the hash in right after committing — it makes "show me the exact Rev X drill map" a `git show <hash>:<path>` one-liner.
+
+| Rev | Date | Release commit | Change |
+|---|---|---|---|
+| A | 2026-08-25 | ce1c499 | Initial release under revision control (design state as specified above: 9 × 41.25 provisional, 10 rivets, hammered black / gray texture TBD). |
+| B | 2026-08-30 | _fill on commit_ | Corner bolts 1/4-20 → **5/16-18 × 1/2** (sourced locally; better head proportion): clearance 9/32 → 11/32 (now shares the relief bit), tap 13/64 → 17/64. Fastener edge inset locked at **3/4"** with a new check (coupon revealed reliefs undrillable at BAR/2 inset). Real-cover geometry otherwise unchanged (inset was already 0.75 by coincidence of BAR=1.5). |

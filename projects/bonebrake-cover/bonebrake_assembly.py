@@ -60,7 +60,7 @@ COUPON = len(sys.argv) > 1 and sys.argv[1] == "coupon"
 # finish callouts, artwork. Letters per ASME Y14.35: skip I, O, Q, S, X, Z; after
 # Y comes AA, AB, … The BRIEF's "Current revision" line and history table must be
 # updated with every bump — a generation check enforces the match.
-REV = "A"
+REV = "B"
 
 if COUPON:
     W, H, BAR = 2.5, 6.25, 0.5
@@ -79,13 +79,15 @@ PANEL_MATERIAL = "11ga mild steel"   # shown in the program table Jimmie cuts fr
 PANEL_QTY = {"face": 1, "middle": 2 if COUPON else 1}
 CORNER_R = 0.125       # face/middle corner radius
 
-BOLT = "1/4-20"        # corner bolts: black-oxide flanged button head hex, 1/4-20 x 1/2
-# Coarse thread (1/4-28 fine variant considered, coarse chosen: standard tap + cheaper).
+BOLT = "5/16-18"       # corner bolts: flanged button head hex, 5/16-18 x 1/2 —
+# Rev B: sourced at the local hardware store; Brian judged 5/16 heads better
+# proportioned on the 1.5" bar than the original 1/4-20 (91355A081, superseded).
 
-BOLT_FLANGE_DIA = 0.58   # approximate — catalog STEP supersedes primitive dims
-BOLT_DOME_DIA = 0.44
-BOLT_HEAD_H = 0.165
+BOLT_FLANGE_DIA = 0.69   # approximate — catalog STEP supersedes primitive dims
+BOLT_DOME_DIA = 0.55
+BOLT_HEAD_H = 0.20
 BOLT_LEN = 0.5           # 1/2" = flush with frame back at nominal stack (0.500)
+                         # VERIFY purchased length — anything longer fails the brick check
 
 # Catalog hardware (McMaster STEP downloads) — used when the file exists in
 # lib/hardware/, else the parametric primitive below stands in. Convention for
@@ -93,7 +95,7 @@ BOLT_LEN = 0.5           # 1/2" = flush with frame back at nominal stack (0.500)
 # model's rotate/z_shift once after downloading (catalog orientations vary).
 # Filename convention: <type>-<head/drive>-<thread>x<length>-<finish>-<sku>.step
 # Config matches on the spec prefix (glob) so finish/SKU need no code change.
-BOLT_MODEL = {"file": "bolt-flangedbutton-hex-1_4-20x1_2-*.step", "rotate_x": 0.0, "z_shift": 0.0}
+BOLT_MODEL = {"file": "bolt-flangedbutton-hex-5_16-18x1_2-*.step", "rotate_x": 0.0, "z_shift": 0.0}
 RIVET_MODEL = {"file": "rivet-solid-brazier-3_16x1_2-*.step", "rotate_x": 0.0, "z_shift": 0.0}
 
 # SOLID rivets (bucked on the bench — unit has back-side access; POP rejected).
@@ -107,10 +109,10 @@ RELIEF_DIA = 11 / 32   # frame holes hosting the shop heads (dia + placement mar
 
 # As-built hole sizes chosen from a FRACTIONAL drill index (Jimmie's bench).
 # Per-role rounding: clearance rounds UP, rivet fit stays snug, tap drill uses
-# the published fractional equivalent of #7. B and C share one 13/64 bit.
-BOLT_CLEAR_DIA = 9 / 32    # 0.281 — bolt clearance (up from close-fit F 0.257)
+# the published fractional equivalent. A and D now share one 11/32 bit (Rev B).
+BOLT_CLEAR_DIA = 11 / 32   # 0.344 — bolt clearance (+0.031 over 5/16 major, rounds UP)
 RIVET_HOLE_DIA = 13 / 64   # 0.203 — solid-rivet snug fit (shank swells to fill)
-TAP_DRILL_DIA = 13 / 64    # 0.203 — 1/4-20 tap drill, ~72% thread
+TAP_DRILL_DIA = 17 / 64    # 0.266 — 5/16-18 fractional tap equivalent (~65% thread, hand-tap friendly)
 
 
 def frac(d: float) -> str:
@@ -156,7 +158,12 @@ ART_BAND = 0.75     # top/bottom keep-out (matches the approved 2D fit)
 
 # --------------------------------------------------------------- PATTERNS
 
-CORNER_INSET = BAR / 2
+# Rev B (coupon lesson): the coupon's BAR/2 inset put rivet holes too close to
+# the edge to drill their frame reliefs. Real cover locks EVERY fastener center
+# at >= 3/4" from the panel edges (generation check); the coupon keeps its
+# historical geometry — it's already cut.
+EDGE_INSET = BAR / 2 if COUPON else 0.75
+CORNER_INSET = EDGE_INSET
 
 
 def corner_pattern() -> list[tuple[float, float]]:
@@ -173,7 +180,7 @@ RIVET_ROWS = 2 if COUPON else None
 
 def rivet_pattern() -> list[tuple[float, float]]:
     """Evenly spaced pairs down the sides between the corner bolts, rows by height."""
-    x = W / 2 - BAR / 2
+    x = W / 2 - EDGE_INSET
     y_top = H / 2 - CORNER_INSET
     span = 2 * y_top
     rows = RIVET_ROWS if RIVET_ROWS else max(3, round(span / RIVET_SPACING_TARGET))
@@ -368,8 +375,8 @@ def flanged_button_bolt_primitive():
     dome = Pos(0, 0, flange_h + dome_h / 2) * Cylinder(BOLT_DOME_DIA / 2, dome_h)
     bolt = shank + flange + dome
     bolt = fillet(bolt.edges().group_by(Axis.Z)[-1], dome_h * 0.6)
-    # hex-drive recess: cosmetic hexagonal pocket (5/32 across flats)
-    hex_af = 0.156
+    # hex-drive recess: cosmetic hexagonal pocket (3/16 across flats for 5/16 button)
+    hex_af = 0.1875
     hex_r = hex_af / 1.7320508  # across-flats -> circumradius
     hex_pocket = Pos(0, 0, BOLT_HEAD_H - 0.04) * extrude(RegularPolygon(hex_r, 6), 0.08)
     return bolt - hex_pocket
@@ -453,7 +460,18 @@ def run_checks(art=None) -> list[tuple[str, bool, str]]:
         (
             "rivet holes land on side bar",
             all(abs(px) - RELIEF_DIA / 2 > bar_x_min for px, _ in rivet_pattern()),
-            f"rivet x ±{W / 2 - BAR / 2:.3f}, bar inner edge ±{bar_x_min:.3f}",
+            f"rivet x ±{W / 2 - EDGE_INSET:.3f}, bar inner edge ±{bar_x_min:.3f}",
+        ),
+        (
+            "fastener centers >= 3/4 from panel edges (coupon relief lesson)",
+            COUPON or (
+                CORNER_INSET >= 0.75
+                and EDGE_INSET >= 0.75
+                and all(H / 2 - abs(py) >= 0.75 for _, py in rivet_pattern())
+            ),
+            "coupon exempt (already cut)" if COUPON else
+            f"corner inset {CORNER_INSET:.2f}, rivet x inset {EDGE_INSET:.2f}, "
+            f"rivet y edge dist {min(H / 2 - abs(py) for _, py in rivet_pattern()):.2f}",
         ),
         (
             "screw does not protrude into brick",
@@ -550,8 +568,8 @@ def write_bom(out_path: Path) -> Path:
          f'{bar_run:.1f}" net — buy ≥ {bar_buy:.0f}" ({bar_ft:.1f} ft, ~${bar_cost:.0f})',
          "steel supplier"),
         ("Sheet 11ga mild steel", "face + middle panels", sheet_note, "steel supplier"),
-        (f"Bolt, {BOLT} x 1/2 flanged button head hex, black-oxide", "unit → frame",
-         "4 (pack of 25 on order)", f"McMaster {catalog_sku(BOLT_MODEL)}"),
+        (f"Bolt, {BOLT} x 1/2 flanged button head hex", "unit → frame",
+         "4 (on hand)", "local hardware store (sourced 2026-08-30)"),
         (f'Solid rivet, {RIVET_SIZE} x {RIVET_LEN:.2g}" brazier head, aluminum',
          "face+middle (bucked)", f"{len(rivet_pattern())} + spares",
          f"McMaster {catalog_sku(RIVET_MODEL)} / Amazon on hand"),
@@ -571,8 +589,8 @@ def write_bom(out_path: Path) -> Path:
     lines += [f"| {a} | {b} | {c} | {d} |" for a, b, c, d in rows]
     lines += ["", f"Material cost (price book): bar ~${bar_cost:.2f} + sheet ~${sheet_cost:.2f} "
               f"= **~${bar_cost + sheet_cost:.0f}** (hardware/paint extra; prices in lib/materials.py)"]
-    lines += ["", f"Drill index needed: {frac(RIVET_HOLE_DIA)} (B+C), {frac(BOLT_CLEAR_DIA)} (A), "
-              f"{frac(RELIEF_DIA)} (D), 1/4-20 tap; on-site: 3/16 carbide (SDS), 9/32 + 82-deg countersink for Tapcon heads."]
+    lines += ["", f"Drill index needed: {frac(RIVET_HOLE_DIA)} (B), {frac(TAP_DRILL_DIA)} (C), "
+              f"{frac(BOLT_CLEAR_DIA)} (A + D — one bit), {BOLT} tap; on-site: 3/16 carbide (SDS), 9/32 + 82-deg countersink for Tapcon heads."]
     out_path.write_text("\n".join(lines) + "\n")
     return out_path
 
