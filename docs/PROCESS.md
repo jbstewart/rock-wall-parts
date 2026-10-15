@@ -14,7 +14,7 @@ Every job is a parametric Python script, not a hand-built CAD model. The script 
 ## Design conventions
 
 - **Units:** parts are authored in inches; STEP is exported in mm. Parts are built at the origin, scaled ×25.4, then placed. STEP components are labeled and colored so Fusion imports arrive named and tinted.
-- **Validation:** generation-time checks gate all geometry (fit, clearances, thread engagement, rivet tail length, artwork keep-outs, spec/brief sync — 17 checks on the current job). A failed check means no files are written. Every discovered bug becomes a permanent check.
+- **Validation:** generation-time checks gate all geometry (fit, clearances, thread engagement, rivet tail length, artwork keep-outs, spec/brief sync — 37 checks on the current job). A failed check means no files are written. Every discovered bug becomes a permanent check.
 - **Artwork** (decorative cut-ins) is imported SVG/DXF, never generated or hand-drawn in Fusion; it is auto-fit and kernel-verified to clear every fastener keep-out, backing off scale automatically until it does.
 - **Hardware** is McMaster-Carr catalog STEP models (no-thread versions), auto-oriented by code; the SKU embedded in the filename feeds the generated BOM. McMaster is the spec/CAD source even when parts are purchased elsewhere.
 

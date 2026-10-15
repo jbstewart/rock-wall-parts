@@ -41,7 +41,7 @@ from build123d import (  # noqa: E402
 # All inches; STEP exports scale x25.4 via place(). z=0 is the flange seat
 # (top of upholstery), +z up, origin centered between the two bores.
 
-REV = "B"
+REV = "G"
 
 # Seat recess (SilveradoCupHolder Drawing.pdf + corrected worksheet)
 BORE_CC = 3.75          # bore / recess circle centers
@@ -73,24 +73,39 @@ FLOOR_Z = -0.55         # cup rest floor (top surface) inside each well
 WELL_R = 1.675          # well bore; collar skirt drops inside this
 DRAIN_R = 0.125
 
-# Snap clips (4) — engage under the plate, 45-deg-ish ramps both ways
+# Snap clips (4) — engage under the plate, 45-deg-ish ramps both ways.
+# Rev C: SEPARATE parts, printed flat (Casey's coupon snapped at the root —
+# integral clips print with layer seams ACROSS the leg; flat-printed clips
+# carry the bend along continuous perimeter lines). T-head drops into a pocket
+# through the flange and bears on the plug wall: pull-out load seats the head
+# DEEPER. Light press fit; a drop of CA is cheap insurance (build sheet).
 CLIP_CC = 3.625         # hook centers; check proves fit for both measured pocket c-c (3.5 & 3.75)
 CLIP_W = 0.60           # Rev B: narrowed from 0.70 so the hook's outer corner stays
                         # close to the stadium's straight wall (corner curve costs deflection)
+HEAD_W = 0.90           # clip T-head bar
+HEAD_DEPTH = 0.23       # radial (y) depth of the head
+POCKET_CLR = 0.01       # pocket oversize per side around the head
 CLIP_T = 0.065          # tongue thickness (~4 perimeters of a 0.4 nozzle)
 CLIP_GAP = 0.06         # window side/back gaps around the tongue
-PLATE_CLR = 0.03        # hook top sits this far below the plate underside
 HOOK_ENG = 0.08         # radial bite past the plate opening edge
-HOOK_TOP_Z = -(LEDGE + PLATE_CLR)      # -0.53
-HOOK_TIP_Z = HOOK_TOP_Z - 0.12         # -0.65 (back-ramp ~50 deg -> removable)
-TONGUE_BOT = -0.72                     # steeper lead-in below the tip
+TONGUE_BOT = -0.72      # lead-in ramp runs from the tip back to the face here
 HOOK_TIP_R = HOLE_D / 2 + HOOK_ENG     # 2.06 from well center
 INSERT_CLR = 0.015      # hook must retract to hole radius minus this to pass the plate
-PETG_STRAIN_LIMIT = 0.035  # momentary flex during snap-in (coupon validates)
+# Rev D: the 45-deg back-ramp let the plate corner land partway down the slope —
+# measured 11/16 to the tip vs the 1/2 ledge depth, ~1/16+ of slack (Brian).
+# Now a SHALLOW back-ramp is aimed so the bearing point AT THE PLATE CORNER
+# sits exactly LEDGE below the flange seat (+SNUG_ADJUST): snug, and a firm
+# pull still cams it off for removal.
+RAMP_SLOPE = 0.4        # dz per dr of the back-ramp (~22 deg from horizontal)
+SNUG_ADJUST = 0.000     # + loosens, - preloads; THE field-tuning knob after a test fit
+PETG_STRAIN_LIMIT = 0.045  # in-plane limit — clips print FLAT (Rev C); the old
+                           # 0.035 guarded the across-layer direction
 
 # Bayonet (collar frame: waist scallop faces +x, i.e. azimuth 0)
 LUG_AZ = (135, 315)     # locked lug centers
-TWIST = 25              # insert at LUG_AZ + TWIST (outboard), twist toward waist to lock
+TWIST = 35              # insert at LUG_AZ + TWIST (outboard), twist toward waist to lock
+                        # Rev F: 25 -> 35 deg = ~1.04" of lug travel (Brian: longer,
+                        # more secure wrap; lugs unchanged, entries rotate to suit)
 LUG_ARC = 20
 ENTRY_ARC = 24
 SKIRT_RO = 1.65
@@ -102,12 +117,31 @@ CH_RI, CH_RO = 1.58, 1.83
 COLLAR_SEAT = FLANGE_T  # collar seats on the flange top
 
 # Collar
-COL_TOP = 3.132         # supports the cup right above its taper top (z 2.90)
+COL_CONE_TOP = 3.132    # inner/outer taper ends here (right above the cup's taper top)
+COL_STRAIGHT = 0.875    # Rev F straight extension (Brian: 7/8 headroom before the
+                        # cup's next section; bore goes STRAIGHT, not tapered)
+COL_TOP = COL_CONE_TOP + COL_STRAIGHT
+# Rev F grip ribs — the coupon fooled us: the loose cone let the cup wedge high
+# and feel snug, but bottomed on the well floor the bore had ~3/32+ radial slop
+# (Brian measured). Six internal ribs whose tips FOLLOW the cup profile at a
+# constant gap; RIB_CLR is THE fit knob (cone clearance stays drop-in loose).
+RIB_AZ = (45, 90, 135, 225, 270, 315)  # C2-symmetric, all >= 45 deg from the
+                        # az-0 notch (a 30-deg fin would get sliced by it)
+RIB_W = 0.12
+RIB_CLR = 0.015         # radial rib-tip-to-cup gap
+RIB_Z0 = 0.25           # ribs start above the well-floor entry region
 RING_RO = 1.85          # base ring hides the entry slots cut through the flange
 RING_T = 0.10
-CONE_RO_B, CONE_RO_T = 1.655, 1.95
+WALL = 0.14             # Rev E: beefed from 0.10 (Casey); grows OUTWARD, cup ID untouched
 CONE_RI_B, CONE_RI_T = 1.53, 1.85    # inner taper, SKIRT_Z0 -> COL_TOP
-SCALLOP_R = 2.02        # neighbor-envelope trim; guarantees collar-collar clearance
+CONE_RO_B, CONE_RO_T = CONE_RI_B + WALL, CONE_RI_T + WALL
+# Rev E: the neighbor-clearance scallop (an envelope-trim artifact that read as
+# a print accident — Brian) becomes a DELIBERATE U-shaped relief notch through
+# the wall, facing the other cup. It carries all waist clearance for the
+# beefed wall; kernel checks prove a locked pair never touch and a second
+# collar drops in beside a locked one.
+NOTCH_W = 1.70          # chord width of the U
+NOTCH_BOT = 1.55        # lowest point of the U (round bottom, r = NOTCH_W/2)
 
 # Printer — Creality CR-6 SE (confirmed 2026-08-30); one-piece base fits the bed
 BED_MM = 235.0
@@ -128,6 +162,7 @@ COLORS = {
     "base": Color(0.15, 0.15, 0.15),
     "collar": Color(0.90, 0.45, 0.10),
     "cup": Color(0.85, 0.10, 0.10),
+    "clip": Color(0.45, 0.45, 0.50),
 }
 
 
@@ -173,34 +208,54 @@ def stadium(r: float):
 # (slightly recessed along the straight run), so nothing but the hook is proud.
 CLIP_CORNER_OFF = max(0.0, CLIP_CC / 2 + CLIP_W / 2 - BORE_CC / 2)
 TONGUE_FACE_R = (PLUG_R**2 - CLIP_CORNER_OFF**2) ** 0.5
+# plate opening edge at the clip's worst (outer) corner, and the hook-ramp z's
+# solved so the ramp crosses the plate corner at exactly LEDGE (+SNUG_ADJUST)
+PLATE_EDGE_MIN = (HOLE_D**2 / 4 - CLIP_CORNER_OFF**2) ** 0.5
+HOOK_ROOT_Z = -LEDGE + (PLATE_EDGE_MIN - TONGUE_FACE_R) * RAMP_SLOPE + SNUG_ADJUST
+HOOK_TIP_Z = HOOK_ROOT_Z - (HOOK_TIP_R - TONGUE_FACE_R) * RAMP_SLOPE
 
 
-def clip_tongue():
-    """One snap clip in local frame: centered on x, outward +y, hanging from
-    the flange. Hook profile drawn in the YZ plane, extruded across the width."""
-    leg_top = 0.12  # root buried in the flange for a solid fillet-free anchor
+def clip_part():
+    """One snap clip as a SEPARATE part (Rev C), modeled installed on the +y
+    side: T-head flush in the flange pocket, leg + hook hanging through the
+    wall slot. PRINT FLAT (lying on its side) — that runs the layer lines
+    root-to-hook, the direction the integral Rev B clip snapped across."""
+    head_h = FLANGE_T - 0.002  # sits 2 thou below the flange top
+    head = Pos(0, TONGUE_FACE_R - HEAD_DEPTH / 2, head_h / 2) * Box(
+        HEAD_W, HEAD_DEPTH, head_h
+    )
+    leg_top = 0.10  # fused up into the head
     leg = Pos(0, TONGUE_FACE_R - CLIP_T / 2, (leg_top + TONGUE_BOT) / 2) * Box(
         CLIP_W, CLIP_T, leg_top - TONGUE_BOT
     )
     hook_profile = Plane.YZ * Polygon(
-        (TONGUE_FACE_R, HOOK_TOP_Z),
+        (TONGUE_FACE_R, HOOK_ROOT_Z),
         (HOOK_TIP_R, HOOK_TIP_Z),
         (TONGUE_FACE_R, TONGUE_BOT),
     )
     # extrude() on a Plane.YZ sketch runs -X, not +X (bit us at Rev A: hooks
     # landed a full width sideways as floating solids) — shift +w/2 to center.
     hook = Pos(CLIP_W / 2, 0, 0) * extrude(hook_profile, CLIP_W)
-    return leg + hook
+    return head + leg + hook
 
 
-def clip_window():
-    """Wall cutout that frees the tongue to flex (local frame, +y side)."""
-    w = CLIP_W + 2 * CLIP_GAP
-    y_mid = (WELL_R - 0.09 + PLUG_R + 0.15) / 2
-    depth = (PLUG_R + 0.15) - (WELL_R - 0.09)
-    return Pos(0, y_mid, (0.0 + (TONGUE_BOT - 0.06)) / 2) * Box(
-        w, depth, 0.0 - (TONGUE_BOT - 0.06)
+def clip_cuts():
+    """Base cutouts at one clip position (+y side): head pocket through the
+    flange (floor = plug-wall top, the bearing surface) and the wall slot the
+    leg flexes in."""
+    pocket = Pos(0, TONGUE_FACE_R - HEAD_DEPTH / 2, 0.15) * Box(
+        HEAD_W + 2 * POCKET_CLR, HEAD_DEPTH + 2 * POCKET_CLR, 0.30
     )
+    # Rev G: the slot runs THROUGH the flange — at Rev F it stopped at the
+    # flange underside, leaving only the 0.134 pocket/slot overlap as the way
+    # in, and the 0.189-deep hook could not pass (Brian's clip snapped trying).
+    # Leaves a small open slot outboard of each head; doubles as drainage.
+    slot_y1, slot_y2 = TONGUE_FACE_R - CLIP_T - CLIP_GAP, HOOK_TIP_R + 0.09
+    slot_top = FLANGE_T + 0.07
+    slot = Pos(0, (slot_y1 + slot_y2) / 2, (slot_top + TONGUE_BOT - 0.06) / 2) * Box(
+        CLIP_W + 2 * CLIP_GAP, slot_y2 - slot_y1, slot_top - (TONGUE_BOT - 0.06)
+    )
+    return pocket + slot
 
 
 def bayonet_cuts_left():
@@ -239,39 +294,84 @@ def build_base_full():
     base -= Pos(-BORE_CC / 2, 0, 0) * slots
     base -= Pos(BORE_CC / 2, 0, 0) * Rot(0, 0, 180) * slots
 
-    tongue, window = clip_tongue(), clip_window()
+    cuts = clip_cuts()
     for gx in (-CLIP_CC / 2, CLIP_CC / 2):
         for ang in (0, 180):
-            base -= Pos(gx, 0, 0) * Rot(0, 0, ang) * window
-    for gx in (-CLIP_CC / 2, CLIP_CC / 2):
-        for ang in (0, 180):
-            base += Pos(gx, 0, 0) * Rot(0, 0, ang) * tongue
+            base -= Pos(gx, 0, 0) * Rot(0, 0, ang) * cuts
     return base
+
+
+def place_clips(clip):
+    """The four clip parts in their installed positions."""
+    return [
+        Pos(gx, 0, 0) * Rot(0, 0, ang) * clip.scale(1.0)
+        for gx in (-CLIP_CC / 2, CLIP_CC / 2)
+        for ang in (0, 180)
+    ]
 
 
 # --------------------------------------------------------------- COLLAR
 
 
 def build_collar():
-    """One collar in well-local frame, waist scallop facing +x. The same part
-    rotated 180 deg serves the other well."""
-    cone_h = COL_TOP - COLLAR_SEAT
+    """One collar in well-local frame, waist relief notch facing +x. The same
+    part rotated 180 deg serves the other well."""
+    cone_h = COL_CONE_TOP - COLLAR_SEAT
+    slope_o = (CONE_RO_T - CONE_RO_B) / cone_h
     outer = Pos(0, 0, COLLAR_SEAT + cone_h / 2) * Cone(CONE_RO_B, CONE_RO_T, cone_h)
+    outer += Pos(0, 0, COL_CONE_TOP + COL_STRAIGHT / 2) * Cylinder(CONE_RO_T, COL_STRAIGHT)
     ring = Pos(0, 0, COLLAR_SEAT + RING_T / 2) * Cylinder(RING_RO, RING_T)
+    # Rev C (Casey): 45-deg chamfer blends the ring top into the cone so the
+    # upside-down print has no flat overhang ledge — no supports.
+    collar = outer + ring
+    ring_top = COLLAR_SEAT + RING_T
+    # chamfer cone: from ring OD at ring_top, 45 deg up-inward until it meets the body
+    ch_height = 0.19
+    ring_ch = Pos(0, 0, ring_top + ch_height / 2) * Cone(
+        RING_RO, CONE_RO_B + slope_o * (ring_top + ch_height - COLLAR_SEAT) + 0.005,
+        ch_height,
+    )
+    collar += ring_ch
     skirt_h = COLLAR_SEAT - SKIRT_Z0
     skirt = Pos(0, 0, SKIRT_Z0 + skirt_h / 2) * Cylinder(SKIRT_RO, skirt_h)
-    collar = outer + ring + skirt
+    collar += skirt
+    # Rev C (Casey): lugs are 45-deg wedges — full protrusion at the bottom,
+    # flush with the skirt at the top — so the upside-down print (lugs last)
+    # never overhangs. The bayonet channel ceiling bears on the top edge at
+    # the skirt root; retention loads there are small.
+    lug_wedge = Pos(0, 0, (LUG_Z[0] + LUG_Z[1]) / 2) * Cone(
+        LUG_RO + 0.01, SKIRT_RO, LUG_Z[1] - LUG_Z[0]
+    )
     for az in LUG_AZ:
-        collar += sector(SKIRT_RO - 0.03, LUG_RO, az - LUG_ARC / 2, az + LUG_ARC / 2,
-                         LUG_Z[0], LUG_Z[1])
-    # inner taper: one continuous cone from below the skirt to above the top
-    slope = (CONE_RI_T - CONE_RI_B) / (COL_TOP - SKIRT_Z0)
-    z1, z2 = SKIRT_Z0 - 0.01, COL_TOP + 0.01
-    r1, r2 = CONE_RI_B - 0.01 * slope, CONE_RI_T + 0.01 * slope
-    inner = Pos(0, 0, (z1 + z2) / 2) * Cone(r1, r2, z2 - z1)
+        lug = sector(SKIRT_RO - 0.03, LUG_RO, az - LUG_ARC / 2, az + LUG_ARC / 2,
+                     LUG_Z[0], LUG_Z[1])
+        collar += lug & lug_wedge
+    # inner: cone up to COL_CONE_TOP, then STRAIGHT bore to the top (Rev F)
+    slope = (CONE_RI_T - CONE_RI_B) / (COL_CONE_TOP - SKIRT_Z0)
+    z1 = SKIRT_Z0 - 0.01
+    r1 = CONE_RI_B - 0.01 * slope
+    inner = Pos(0, 0, (z1 + COL_CONE_TOP) / 2) * Cone(r1, CONE_RI_T, COL_CONE_TOP - z1)
+    inner += Pos(0, 0, (COL_CONE_TOP - 0.02 + COL_TOP + 0.01) / 2) * Cylinder(
+        CONE_RI_T, COL_TOP + 0.01 - (COL_CONE_TOP - 0.02)
+    )
     collar -= inner
-    scallop = Pos(BORE_CC, 0, 1.0) * Cylinder(SCALLOP_R, 9.0)
-    return collar - scallop
+    # grip ribs: fins clipped to the body envelope, tips carved by the grown cup
+    fins = None
+    for az in RIB_AZ:
+        fin = Rot(0, 0, az) * Pos(1.72, 0, (RIB_Z0 + COL_TOP - 0.05) / 2) * Box(
+            0.76, RIB_W, COL_TOP - 0.05 - RIB_Z0
+        )
+        fins = fin if fins is None else fins + fin
+    body_envelope = outer + skirt
+    collar += (fins & body_envelope) - build_cup(RIB_CLR)
+    # U-notch: straight sides + full-round bottom, cut radially through the
+    # wall toward the neighbor (+x). Prism reaches x 1.15..2.55 — through the
+    # near wall only, the far wall is at -x.
+    zb = NOTCH_BOT + NOTCH_W / 2
+    ztop = COL_TOP + 0.3
+    notch = Pos(1.85, 0, (zb + ztop) / 2) * Box(1.4, NOTCH_W, ztop - zb)
+    notch += Pos(1.85, 0, zb) * Rot(0, 90, 0) * Cylinder(NOTCH_W / 2, 1.4)
+    return collar - notch
 
 
 def cup_radius(z: float) -> float:
@@ -283,15 +383,16 @@ def cup_radius(z: float) -> float:
     return CUP_TAPER_TOP_D / 2 + (CUP_RIM_D - CUP_TAPER_TOP_D) / 2 * frac
 
 
-def build_cup():
+def build_cup(grow: float = 0.0):
     """Reference 30 oz tumbler (base taper + flared body to the Ø4.0 rim)
-    sitting on the well floor, in well-local frame."""
+    sitting on the well floor, in well-local frame. grow > 0 offsets the
+    surface radially — used to carve the rib tips at RIB_CLR (Rev F)."""
     taper = Pos(0, 0, FLOOR_Z + CUP_TAPER_H / 2) * Cone(
-        CUP_BASE_D / 2, CUP_TAPER_TOP_D / 2, CUP_TAPER_H
+        CUP_BASE_D / 2 + grow, CUP_TAPER_TOP_D / 2 + grow, CUP_TAPER_H
     )
     body_h = CUP_H - CUP_TAPER_H
     body = Pos(0, 0, FLOOR_Z + CUP_TAPER_H + body_h / 2) * Cone(
-        CUP_TAPER_TOP_D / 2, CUP_RIM_D / 2, body_h
+        CUP_TAPER_TOP_D / 2 + grow, CUP_RIM_D / 2 + grow, body_h
     )
     return taper + body
 
@@ -312,13 +413,13 @@ def bbox_xy_in(shape) -> tuple[float, float]:
     return bb.size.X, bb.size.Y
 
 
-def run_checks(base_full, collar, cups_placed, collars_placed):
+def run_checks(base_full, collar, clip, clips_placed, cups_placed, collars_placed):
     # Worst-case snap-in deflection is at the clip's OUTER corner, where the
-    # stadium's end-circle pulls the plate edge inward (Rev B).
-    plate_edge_min = (HOLE_D**2 / 4 - CLIP_CORNER_OFF**2) ** 0.5
-    deflect = HOOK_TIP_R - (plate_edge_min - INSERT_CLR)
-    hook_mid_z = (HOOK_TOP_Z + HOOK_TIP_Z) / 2
-    strain = 1.5 * CLIP_T * deflect / hook_mid_z**2
+    # stadium's end-circle pulls the plate edge inward (Rev B); worst lever is
+    # the moment the plate edge rides over the tip (Rev D).
+    deflect = HOOK_TIP_R - (PLATE_EDGE_MIN - INSERT_CLR)
+    strain = 1.5 * CLIP_T * deflect / HOOK_TIP_Z**2
+    bearing_z = HOOK_ROOT_Z - (PLATE_EDGE_MIN - TONGUE_FACE_R) * RAMP_SLOPE
     hook_lo, hook_hi = CLIP_CC / 2 - CLIP_W / 2, CLIP_CC / 2 + CLIP_W / 2
     pockets = {"drawing c-c 3.5": 3.5, "worksheet c-c 3.75": 3.75}
     pocket_fit = all(
@@ -336,16 +437,17 @@ def run_checks(base_full, collar, cups_placed, collars_placed):
     leftover = fabric_grown - stadium(FLANGE_R)
     uncovered_area = getattr(leftover, "area", 0.0) or 0.0
     flange_covers = uncovered_area < 1e-6
-    # the -X extrude bug (Rev A dev) left the hook detached; prove the tongue
-    # is one connected solid living entirely inside the clip width
-    tongue = clip_tongue()
-    t_bb = tongue.bounding_box()
-    tongue_ok = (len(tongue.solids()) == 1
-                 and max(abs(t_bb.min.X), abs(t_bb.max.X)) <= CLIP_W / 2 + 1e-3)
+    # the -X extrude bug (Rev A dev) left the hook detached; prove the clip
+    # part is one connected solid living entirely inside the head width
+    t_bb = clip.bounding_box()
+    clip_ok = (len(clip.solids()) == 1
+               and max(abs(t_bb.min.X), abs(t_bb.max.X)) <= HEAD_W / 2 + 1e-3)
+    # head bearing: strip of plug-wall top between the pocket's inner edge and
+    # the leg slot that actually carries the pull-out load
+    bearing_strip = (HEAD_DEPTH + POCKET_CLR) - (CLIP_T + CLIP_GAP)
 
-    ri = lambda z: CONE_RI_B + (CONE_RI_T - CONE_RI_B) * (z - SKIRT_Z0) / (COL_TOP - SKIRT_Z0)
-    clr_bot = ri(SKIRT_Z0) - cup_radius(SKIRT_Z0)
-    clr_top = ri(COL_TOP) - cup_radius(COL_TOP)
+    clr_bot = CONE_RI_B - cup_radius(SKIRT_Z0)
+    clr_top = CONE_RI_T - cup_radius(COL_TOP)  # straight bore vs flaring cup (Rev F)
 
     # pre-twist position: lugs sit in the entry slots (kernel-proves alignment)
     pre_l = Pos(-BORE_CC / 2, 0, 0) * Rot(0, 0, TWIST) * collar.scale(1.0)
@@ -360,8 +462,9 @@ def run_checks(base_full, collar, cups_placed, collars_placed):
         ("flange covers the fabric opening EVERYWHERE (kernel)", flange_covers,
          f"(fabric stadium grown 0.15) - flange = {uncovered_area:.6f} in² "
          "(Rev A's bbox-only check missed the waist gap — Brian caught it)"),
-        ("hook engages under the plate", 0.02 <= -(HOOK_TOP_Z + LEDGE) <= 0.08,
-         f"hook top {HOOK_TOP_Z:.2f}, plate underside {-LEDGE:.2f} (clr {-(HOOK_TOP_Z + LEDGE):.3f})"),
+        ("hook bears SNUG at the plate corner (Rev D)", abs(bearing_z + LEDGE) <= 0.015,
+         f"ramp crosses the plate corner at {-bearing_z:.3f} below the flange seat "
+         f"vs ledge {LEDGE:.3f} (Brian measured 11/16 slack-to-tip on Rev C's 45-deg ramp)"),
         ("hook bite is real but insertable", 0.06 <= HOOK_ENG <= POCKET_OUT - 0.02,
          f"bite {HOOK_ENG:.2f} past plate edge, pocket allows {POCKET_OUT - 0.02:.2f}"),
         ("hooks land in pockets under BOTH measured spacings", pocket_fit,
@@ -369,13 +472,19 @@ def run_checks(base_full, collar, cups_placed, collars_placed):
         ("hook clears pocket floor", TONGUE_BOT >= -(LEDGE + POCKET_BELOW_PLATE) + 0.05,
          f"tongue bottom {TONGUE_BOT:.2f} >= pocket floor {-(LEDGE + POCKET_BELOW_PLATE):.2f} + 0.05"),
         ("snap-in flex within PETG limit", strain <= PETG_STRAIN_LIMIT,
-         f"strain {strain * 100:.2f}% <= {PETG_STRAIN_LIMIT * 100:.1f}% (deflect {deflect:.3f} over L {-hook_mid_z:.2f})"),
+         f"strain {strain * 100:.2f}% <= {PETG_STRAIN_LIMIT * 100:.1f}% (deflect {deflect:.3f} over L {-HOOK_TIP_Z:.2f}, in-plane)"),
         ("collar supports the cup above its taper", COL_TOP >= FLOOR_Z + CUP_TAPER_H + 0.2,
          f"collar top {COL_TOP:.2f} >= taper top {FLOOR_Z + CUP_TAPER_H:.2f} + 0.2"),
-        ("cup clearance in collar (bottom / top)", clr_bot >= 0.05 and clr_top >= 0.05,
-         f"radial clr {clr_bot:.3f} / {clr_top:.3f} >= 0.05"),
+        ("cup clearance to the collar WALL (bottom / top)",
+         clr_bot >= 0.05 and clr_top >= 0.03,
+         f"radial clr {clr_bot:.3f} / {clr_top:.3f} (>=0.05/0.03; Rev F ribs carry the "
+         f"actual fit at {RIB_CLR:.3f})"),
+        ("rib grip gap is snug but droppable", 0.008 <= RIB_CLR <= 0.03,
+         f"RIB_CLR {RIB_CLR:.3f} — the Rev F anti-tip fit knob"),
         ("cups clear each other through the collar zone",
-         BORE_CC - 2 * cup_radius(COL_TOP) >= 0.15,
+         # 0.15 relaxed to 0.10 at Rev F: the taller collar tops out where the
+         # cups have converged to ~0.13 apart — seat geometry, consciously accepted
+         BORE_CC - 2 * cup_radius(COL_TOP) >= 0.10,
          f"gap {BORE_CC - 2 * cup_radius(COL_TOP):.2f} at collar top; NOTE Ø{CUP_RIM_D} rims "
          f"overlap {2 * cup_radius(FLOOR_Z + CUP_H) - BORE_CC:.2f} higher up — seat geometry, cups lean apart"),
         ("collars never touch each other (kernel)",
@@ -387,12 +496,26 @@ def run_checks(base_full, collar, cups_placed, collars_placed):
         ("collar drops into the entry slots, pre-twist (kernel)",
          isect_vol(pre_l, base_full) < 1e-4,
          f"collar rotated +{TWIST} deg still clears the base"),
+        ("second collar drops in beside a LOCKED one (kernel, Rev E)",
+         isect_vol(pre_l, collars_placed[1]) < 1e-4,
+         "pre-twist left collar vs locked right collar — the U-notch carries the clearance"),
         ("cups touch neither collar nor base (kernel)",
          all(isect_vol(c, s) < 1e-4 for c in cups_placed
              for s in (collars_placed[0], collars_placed[1], base_full)),
          "reference cup solids vs everything"),
-        ("clip tongue is one solid, inside the clip width", tongue_ok,
-         f"{len(tongue.solids())} solid(s), x span ±{max(abs(t_bb.min.X), abs(t_bb.max.X)):.3f}"),
+        ("clip part is one solid, inside the head width", clip_ok,
+         f"{len(clip.solids())} solid(s), x span ±{max(abs(t_bb.min.X), abs(t_bb.max.X)):.3f}"),
+        ("clip head has a real bearing strip on the wall top", bearing_strip >= 0.10,
+         f"strip {bearing_strip:.3f} >= 0.10 (pull-out load seats the head, never lifts it)"),
+        ("installed clips touch neither base nor collars (kernel)",
+         all(isect_vol(c, s) < 1e-4 for c in clips_placed
+             for s in (base_full, collars_placed[0], collars_placed[1])),
+         "4 clips in pockets vs base and locked collars"),
+        ("clip drops STRAIGHT DOWN into place (kernel, Rev G)",
+         all(isect_vol(Pos(0, 0, dz) * clips_placed[0], base_full) < 1e-4
+             for dz in (0.25, 0.55, 0.85)),
+         "lifted clip clears the base along its whole insertion path — Rev F's "
+         "pocket/slot overlap (0.134) jammed the 0.189 hook and snapped a clip"),
         ("one-piece base fits the CR-6 bed",
          max(base_bb.size.X, base_bb.size.Y) * IN <= BED_MM - 4,
          f"base bbox {base_bb.size.X * IN:.0f} x {base_bb.size.Y * IN:.0f} mm <= {BED_MM:.0f}-4"),
@@ -420,8 +543,16 @@ Generated by truck_cupholder.py at Rev {REV} — regenerate, don't hand-edit.
 
 | File | Qty | Orientation | Notes |
 |---|---|---|---|
-| {BASENAME}-base-{REV_TAG}.step | **1** | flange face DOWN | ~211 mm long — one piece; clips grow upward, no supports |
-| {BASENAME}-collar-{REV_TAG}.step | **2** | wide (top) end DOWN | identical collars; skirt+lugs print last |
+| {BASENAME}-base-{REV_TAG}.step | **1** | flange face DOWN | ~211 mm long — no supports; clip pockets bridge internally |
+| {BASENAME}-collar-{REV_TAG}.step | **2** | wide (top) end DOWN | ring + lugs are 45°-chamfered (Rev C, per Casey) — no supports |
+| {BASENAME}-clip-{REV_TAG}.step | **4 + spares** | LYING FLAT on its side | layer lines must run root→hook (Rev C: the upright-printed clip snapped at the root); ~10 min each |
+
+Clip install: hold the clip vertical, hook outboard, and drop it STRAIGHT DOWN —
+the hook passes through the open slot in the flange, then the T-head seats in its
+pocket (light press; a drop of CA under the head is cheap insurance). Pull-out
+loads seat the head deeper — the glue only guards against insertion wiggle. The
+small open slot outboard of each head is the hook's way in (and a drain), not a
+defect.
 
 Every part ships as STEP (preferred: exact curves) AND STL (for mesh-only slicers
 like Cura). Both are mm. Same geometry — use whichever your slicer imports.
@@ -446,16 +577,23 @@ an optional twist-lock test between the two if batch 1 raises doubts.
 
 | File | Tests |
 |---|---|
-| coupon/{BASENAME}-clip-coupon-{REV_TAG}.step | one real clip + flange strip: snap it into a truck pocket — engagement, removal force, PETG layer survival |
-| coupon/{BASENAME}-well-coupon-{REV_TAG}.step | one full well ring (clips + bayonet slots) |
-| coupon/{BASENAME}-collar-coupon-{REV_TAG}.step | shortened collar: twist-lock into the well coupon, drop the cup base in |
+| coupon/{BASENAME}-pocket-coupon-{REV_TAG}.step | the clip's mating SOCKET, cut from the real base (flange strip w/ head pocket + wall slot): press a printed clip in, then snap the pair into a truck pocket — engagement, removal force, flat-print layer survival. NOT a clip — the clip is the production part above. |
+| coupon/{BASENAME}-well-coupon-{REV_TAG}.step | one full well ring (clip cutouts + bayonet slots) |
+Collar fit test: print ONE full production collar — the old shortened collar
+coupon let the cup wedge high in the loose cone and faked a snug fit (Rev F
+lesson), so it is no longer generated. The bayonet twist test works with the
+already-printed Rev A collar coupon (lugs/skirt unchanged since Rev A).
+
+(Print at least one clip alongside the pocket coupon — the coupon is the POCKET;
+the clip itself is the production part.)
 
 If the clip coupon snaps (the part, not the click): thicken CLIP_T or shrink HOOK_ENG
 in the script and regenerate — do not hand-tune prints.
 
 ## Assembly & use
 
-1. Press the base into the platform recess until all four clips click under the plate.
+1. Seat the four clips in their flange pockets (CA drop optional), then press the
+   base into the platform recess until all four click under the plate.
    The flange should sit flat on the fabric. It stays there permanently
    (firm straight pull removes it if ever needed — the hooks are back-ramped).
 2. Collars: lugs drop into the two slots near the OUTBOARD end of each well,
@@ -477,14 +615,17 @@ def main() -> None:
     print("building geometry…")
     base_full = build_base_full()
     collar = build_collar()
+    clip = clip_part()
     cup = build_cup()
 
     collar_l = Pos(-BORE_CC / 2, 0, 0) * collar.scale(1.0)
     collar_r = Pos(BORE_CC / 2, 0, 0) * Rot(0, 0, 180) * collar.scale(1.0)
     cup_l = Pos(-BORE_CC / 2, 0, 0) * cup.scale(1.0)
     cup_r = Pos(BORE_CC / 2, 0, 0) * cup.scale(1.0)
+    clips_placed = place_clips(clip)
 
-    checks = run_checks(base_full, collar, (cup_l, cup_r), (collar_l, collar_r))
+    checks = run_checks(base_full, collar, clip, clips_placed,
+                        (cup_l, cup_r), (collar_l, collar_r))
     print("VALIDATION:")
     ok = True
     for name, passed, detail in checks:
@@ -505,6 +646,9 @@ def main() -> None:
         place(cup, "cup-L", x=-BORE_CC / 2),
         place(cup, "cup-R", x=BORE_CC / 2),
     ]
+    for i, gx in enumerate((-CLIP_CC / 2, CLIP_CC / 2)):
+        for j, ang in enumerate((0, 180)):
+            parts.append(place(Rot(0, 0, ang) * clip, f"clip{2 * i + j + 1}", x=gx))
     asm = Compound(children=parts)
     asm.label = f"{BASENAME}-{REV_TAG}"
     asm_path = OUT_DIR / f"{BASENAME}-assembly-{REV_TAG}.step"
@@ -514,7 +658,7 @@ def main() -> None:
     # print STEPs + STLs (one file per unique part; qty in the build sheet).
     # STLs are hand-off copies for mesh-only slicers (Cura) — gitignored,
     # never committed per repo policy.
-    for shape, stem in ((base_full, "base"), (collar, "collar")):
+    for shape, stem in ((base_full, "base"), (collar, "collar"), (clip, "clip")):
         located = place(shape, stem)
         p = OUT_DIR / f"{BASENAME}-{stem}-{REV_TAG}.step"
         export_step(located, str(p))
@@ -522,13 +666,15 @@ def main() -> None:
         print(f"wrote {p.name} (+.stl)")
 
     # coupons — cut straight out of the real geometry
-    clip_zone = Pos(CLIP_CC / 2, 1.80, -0.3) * Box(0.9, 1.0, 1.6)
+    clip_zone = Pos(CLIP_CC / 2, 1.80, -0.3) * Box(1.05, 1.1, 1.6)
     well_zone = Pos(-BORE_CC / 2, 0, 0) * Cylinder(2.12, 4.0)
-    collar_zone = Pos(0, 0, 0.25) * Box(10, 10, 3.2)
+    # (the shortened collar coupon was retired at Rev F — it wedged the cup high
+    # in the loose cone and reported a snug fit the real assembly didn't have;
+    # the collar fit test is one full production collar)
     coupons = (
-        (base_full & clip_zone, "clip-coupon"),
+        (base_full & clip_zone, "pocket-coupon"),  # renamed from "clip-coupon"
+        # (Brian read that as a coupon OF the clip; it's the clip's socket)
         (base_full & well_zone, "well-coupon"),
-        (collar & collar_zone, "collar-coupon"),
     )
     for shape, stem in coupons:
         located = place(shape, stem)

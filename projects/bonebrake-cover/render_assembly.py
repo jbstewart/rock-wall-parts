@@ -27,13 +27,17 @@ AMBIENT = 0.42
 
 
 def mesh(shape):
-    # Some shapes refuse fine tolerances (meshing returns no triangulation on
-    # a face) — walk coarser until one takes.
+    """Triangles in INCHES from a shape placed in mm.
+
+    Everything here is placed through bonebrake_assembly.place(), which works
+    in mm (STEP units), so the tolerances are mm too and the result converts
+    back to inches for plotting.
+    """
     last = None
     for tol in (0.02, 0.05, 0.1, 0.2):
         try:
-            verts, tris = shape.tessellate(tol)
-            v = np.array([(p.X, p.Y, p.Z) for p in verts])
+            verts, tris = shape.tessellate(tol * ba.IN)
+            v = np.array([(p.X, p.Y, p.Z) for p in verts]) / ba.IN
             return v[np.array(tris)]
         except Exception as e:  # noqa: BLE001 — retry coarser
             last = e
@@ -78,24 +82,30 @@ def shaded_colors(tris, rgb):
 def main() -> None:
     print(f"render — Rev {ba.REV}")
     art = ba.artwork_face()
-    frame = ba.build_frame()
-    middle = ba.build_panel("middle")
-    face = ba.build_panel("face", art=art)
     stack_top = ba.FRAME_T + 2 * ba.PANEL_T
 
-    parts = [
-        (frame, "frame"),
-        (ba.Pos(0, 0, ba.FRAME_T) * middle, "middle"),
-        (ba.Pos(0, 0, ba.FRAME_T + ba.PANEL_T) * face, "face"),
+    # Place every part through the assembly's OWN place() helper, so the render
+    # and the STEP cannot disagree about where anything sits.
+    #
+    # This used to re-derive the placements here, converting the catalog
+    # fasteners with `shape.scale(1/IN)`. That is the trap AGENTS.md names:
+    # scaling a LOCATED shape scales about the local frame and strands the
+    # location, which parked every bolt and rivet 4.075" behind the cover. In
+    # a 3/4 view that depth error reads as a sideways one — the hardware drew
+    # outside the panel's left edge, and it was wrong in the Rev B render too.
+    placed = [
+        ba.place(ba.build_frame(), 0, 0, 0, "frame"),
+        ba.place(ba.build_panel("middle"), 0, 0, ba.FRAME_T, "middle"),
+        ba.place(ba.build_panel("face", art=art), 0, 0, stack_top - ba.PANEL_T, "face"),
+        *ba.build_fasteners(stack_top=stack_top),
     ]
-    bolt, bolt_cat = ba.catalog_or(ba.flanged_button_bolt_primitive, ba.BOLT_MODEL)
-    rivet, rivet_cat = ba.catalog_or(ba.rivet_primitive, ba.RIVET_MODEL)
-    for px, py in ba.corner_pattern():
-        s = bolt.scale(1 / ba.IN if bolt_cat else 1.0)  # catalog files arrive in mm
-        parts.append((ba.Pos(px, py, stack_top) * s, "screw"))
-    for px, py in ba.rivet_pattern():
-        s = rivet.scale(1 / ba.IN if rivet_cat else 1.0)
-        parts.append((ba.Pos(px, py, stack_top) * s, "rivet"))
+    if not ba.COUPON:
+        # Rev C floor base. Tapcons are deliberately left out — they sit behind
+        # the frame against the brick, and this render is for Michelle's finish
+        # choice, not for the installer.
+        placed.append(ba.place(ba.base_bar(lower=True), 0, -ba.H / 2 - ba.BASE_T, 0, "base-lower"))
+        placed.append(ba.place(ba.base_bar(lower=False), 0, -ba.H / 2 - ba.FRAME_T, 0, "base-upper"))
+    parts = [(p, p.label.rstrip("0123456789")) for p in placed]
 
     fig = plt.figure(figsize=(6, 14), dpi=220)
     ax = fig.add_subplot(111, projection="3d", proj_type="ortho")
@@ -103,7 +113,11 @@ def main() -> None:
     # depth sorting can't resolve that at an oblique view (tried; z-fight
     # artifacts), so we dictate the paint order ourselves: brick-side out.
     ax.computed_zorder = False
-    order = {"frame": 0, "middle": 1, "face": 2, "screw": 3, "rivet": 3}
+    # The base projects 1.5" toward the viewer at the bottom of the piece, so
+    # it paints last — at this elevation its front edge rides up over the face
+    # panel's bottom edge in projection.
+    order = {"frame": 0, "middle": 1, "face": 2, "screw": 3, "rivet": 3,
+             "base-lower": 4, "base-upper": 4}
     for shape, key in sorted(parts, key=lambda p: order[p[1]]):
         tris = mesh(shape)
         rgb = tuple(ba.COLORS[key])[:3]  # Color iterates as (r, g, b, a)
@@ -115,11 +129,13 @@ def main() -> None:
         ))
         print(f"  {key}: {len(tris)} tris")
 
-    wx, wy = ba.W / 2 + 0.8, ba.H / 2 + 0.8
+    wx = ba.W / 2 + 0.8
+    y_hi = ba.H / 2 + 0.8
+    y_lo = -(ba.H / 2 + ba.BASE_T) - 0.8   # room for the base below the frame
     ax.set_xlim(-wx, wx)
     ax.set_ylim(-1.5, 2.5)
-    ax.set_zlim(-wy, wy)
-    ax.set_box_aspect((2 * wx, 4.0, 2 * wy))
+    ax.set_zlim(y_lo, y_hi)
+    ax.set_box_aspect((2 * wx, 4.0, y_hi - y_lo))
     ax.view_init(elev=7, azim=-76)
     ax.set_axis_off()
     fig.subplots_adjust(left=0, right=1, top=1, bottom=0)

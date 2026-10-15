@@ -15,7 +15,7 @@ Parametric code-CAD parts library for Rock Wall Forge / Rock Wall Manufacturing 
 ## Core conventions (violations have all bitten us — details in README)
 
 - **Author in inches; STEP is mm.** Build parts at origin, scale ×25.4, THEN place (`place()` helper). Never `Shape.scale()` a located part — it scales about the local frame and strands the placement. `scale()` also serves as copy-on-place: placing one shape N times without copying collapses all labels to the last one.
-- **Generation-time checks gate all geometry.** Every discovered bug becomes a permanent check (17 on bonebrake-cover). Never delete or weaken a check to make generation pass — fix the design, or consciously relax with a comment explaining the engineering reason.
+- **Generation-time checks gate all geometry.** Every discovered bug becomes a permanent check (37 on bonebrake-cover). Never delete or weaken a check to make generation pass — fix the design, or consciously relax with a comment explaining the engineering reason.
 - **Keep the BRIEF synced with every parameter change.** The brief is the spec; a drifted brief is a bug.
 - **Every job carries a `REV` letter** (ASME Y14.35 letters — skip I O Q S X Z, then AA, AB…), stamped into every output filename (`-revA`) and document header, matched by the BRIEF's "Current revision" line (generation check) and its revision-history table. Bump on any form/fit/function change; gcode posted from Fusion is named to match. Released files live as attachments on the PPBO Job — superseded revs are removed there when a new rev is attached.
 - **Artwork is imported, never generated.** SVG or DXF; auto-fit + kernel-verified clearance with auto-backoff. Never hand-cut art in Fusion — regeneration wipes it.
