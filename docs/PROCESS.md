@@ -14,7 +14,7 @@ Every job is a parametric Python script, not a hand-built CAD model. The script 
 ## Design conventions
 
 - **Units:** parts are authored in inches; STEP is exported in mm. Parts are built at the origin, scaled ×25.4, then placed. STEP components are labeled and colored so Fusion imports arrive named and tinted.
-- **Validation:** generation-time checks gate all geometry (fit, clearances, thread engagement, rivet tail length, artwork keep-outs, spec/brief sync — 37 checks on the current job). A failed check means no files are written. Every discovered bug becomes a permanent check.
+- **Validation:** generation-time checks gate all geometry (fit, clearances, thread engagement, rivet tail length, artwork keep-outs, spec/brief sync — 40 checks on the current job). A failed check means no files are written. Every discovered bug becomes a permanent check.
 - **Artwork** (decorative cut-ins) is imported SVG/DXF, never generated or hand-drawn in Fusion; it is auto-fit and kernel-verified to clear every fastener keep-out, backing off scale automatically until it does.
 - **Hardware** is McMaster-Carr catalog STEP models (no-thread versions), auto-oriented by code; the SKU embedded in the filename feeds the generated BOM. McMaster is the spec/CAD source even when parts are purchased elsewhere.
 
@@ -25,6 +25,8 @@ STEP assembly · plasma DXFs (from the same sketches as the solids, so no drift)
 ## Revision control
 
 Every job carries a `REV` letter (ASME Y14.35 style: A, B, … skipping I O Q S X Z). It is stamped into every output filename (`-revA`), every document header, the STEP assembly label, and — by hand — the Fusion-posted gcode filenames (`part-revA.gcode`). A generation check fails the build if the brief's "Current revision" line doesn't match the script. Rev bumps on any form/fit/function change. Released files are attached to the job in Playful Platypus Business Ops (the shop's business system); superseded revs are removed there, and the operator verifies the rev tag on the plasma controller's screen against the build sheet before cutting.
+
+Superseded output files are never deleted outright. They are moved to a per-job `FOR_DELETION/` folder, which is gitignored: for anything already committed git remains the archive, and the folder is a staging area a human empties deliberately rather than a wastebasket an automated step writes to. A rev is only staged once its replacement exists and is committed, so the job is never left without a current set.
 
 ## CAM and plasma specifics
 

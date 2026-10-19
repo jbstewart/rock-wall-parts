@@ -228,4 +228,5 @@ renders/
 *.png
 *.jpg
 .DS_Store
+*-DIAGNOSTIC.*
 FOR_DELETION/

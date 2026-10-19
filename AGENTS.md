@@ -5,6 +5,7 @@ Parametric code-CAD parts library for Rock Wall Forge / Rock Wall Manufacturing 
 ## How to work here
 
 - **Never `rm` or delete files.** Propose what should be deleted and let Brian execute it. This includes "stale" outputs and files you created yourself.
+- **Superseded outputs go to `projects/<job>/FOR_DELETION/`, never to `rm`.** The folder is gitignored, so git stays the archive for anything that was committed — and anything that was NOT committed has no other copy, so say so when you stage it. Move with plain `mv`, not `git mv` (Brian stages). Sequence matters: a rev only moves out once its replacement has been generated AND committed, or the job is briefly left with no current files. Propose the move and let Brian call it; `FOR_DELETION/` itself is emptied by Brian, never by an agent. `output/` holds only the current rev — there is no permanent archive folder, git is that. One exception stays put: outputs for something physically fabricated (an already-cut coupon) are receipts for a part that exists, so they are current, not stale.
 - **Brian handles all git** — never commit, push, or offer to; provide commit messages when asked. **Never rewrite git history** (no rebase/amend/force-push); Brian does those personally.
 - **Stay inside this repo.** Reading other repos is fine; never write outside this tree without asking Brian and getting an explicit OK first.
 - **No long-running servers or watchers.** Use one-shot builds/checks (script runs, typechecks); if something genuinely needs a persistent process, ask Brian to run it.
@@ -15,7 +16,7 @@ Parametric code-CAD parts library for Rock Wall Forge / Rock Wall Manufacturing 
 ## Core conventions (violations have all bitten us — details in README)
 
 - **Author in inches; STEP is mm.** Build parts at origin, scale ×25.4, THEN place (`place()` helper). Never `Shape.scale()` a located part — it scales about the local frame and strands the placement. `scale()` also serves as copy-on-place: placing one shape N times without copying collapses all labels to the last one.
-- **Generation-time checks gate all geometry.** Every discovered bug becomes a permanent check (37 on bonebrake-cover). Never delete or weaken a check to make generation pass — fix the design, or consciously relax with a comment explaining the engineering reason.
+- **Generation-time checks gate all geometry.** Every discovered bug becomes a permanent check (40 on bonebrake-cover). Never delete or weaken a check to make generation pass — fix the design, or consciously relax with a comment explaining the engineering reason.
 - **Keep the BRIEF synced with every parameter change.** The brief is the spec; a drifted brief is a bug.
 - **Every job carries a `REV` letter** (ASME Y14.35 letters — skip I O Q S X Z, then AA, AB…), stamped into every output filename (`-revA`) and document header, matched by the BRIEF's "Current revision" line (generation check) and its revision-history table. Bump on any form/fit/function change; gcode posted from Fusion is named to match. Released files live as attachments on the PPBO Job — superseded revs are removed there when a new rev is attached.
 - **Artwork is imported, never generated.** SVG or DXF; auto-fit + kernel-verified clearance with auto-backoff. Never hand-cut art in Fusion — regeneration wipes it.

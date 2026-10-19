@@ -13,7 +13,7 @@ Run:  ../../.venv/bin/python bonebrake_assembly.py
 """
 
 import sys
-from math import hypot, radians, tan
+from math import floor, hypot, radians, tan
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -27,6 +27,7 @@ from build123d import (  # noqa: E402
     Cone,
     Face,
     Wire,
+    Edge,
     Color,
     Compound,
     Cylinder,
@@ -182,6 +183,88 @@ CAMSHEET_NAME = f"{BASENAME}-camsheet-{REV_TAG}.md"
 BRIEF_PATH = Path(__file__).parent / "BRIEF.md"
 
 
+def layer_split_dxf(path) -> dict:
+    """Put the pilot circles on their own DXF layer, everything else on CUTS.
+
+    The two ops need different settings (centre comp + no leads for pilots,
+    normal comp + leads for everything else), and with one flat layer the only
+    way to keep pilots OUT of the profiles op is to pick contours by hand — on a
+    file with 40-odd of them. Layers make it a two-click job: Insert DXF with the
+    per-layer sketch option and each op selects its own sketch.
+
+    Not cosmetic. Brian posted a coupon where the profiles op still had the
+    pilots selected; it cut correctly only because their leads could not fit and
+    Fusion discarded them, which also left a permanent warning on the op that
+    would have masked a real discarded pass later.
+    """
+    import ezdxf
+
+    doc = ezdxf.readfile(str(path))
+    msp = doc.modelspace()
+    for name, color in (("CUTS", 7), ("PILOTS", 1)):
+        if name not in doc.layers:
+            doc.layers.add(name, color=color)
+    tally = {"CUTS": 0, "PILOTS": 0}
+    for e in msp:
+        pilot = (e.dxftype() == "CIRCLE"
+                 and abs(e.dxf.radius - PILOT_DIA / 2) < 1e-6)
+        layer = "PILOTS" if pilot else "CUTS"
+        e.dxf.layer = layer
+        tally[layer] += 1
+    doc.saveas(str(path))
+    return tally
+
+
+def repair_degenerate_splines(path, chord: float = 0.0005) -> list:
+    """Replace any DXF spline with a zero-length control span by a polyline.
+
+    An SVG corner node whose handle sits exactly on its anchor exports as a
+    cubic with its last two control points identical, so the curve's derivative
+    vanishes at that end. The curve is geometrically fine and every topology
+    test passes it — closed loops, no crossings, 1e-9 endpoint gaps — but Fusion
+    will not build a profile from the region containing it, and so will not
+    extrude or take a 2D CAM op on it. Rev D carried exactly one, in the right-
+    hand tree, and it failed in both the coupon and the panel face while the
+    left tree (146 splines, no degenerates) imported fine. Proven by experiment:
+    the same loop re-emitted as a polyline profiles correctly, as does the whole
+    coupon; only the spline form fails.
+
+    So the one offending curve is re-emitted flattened. chord 0.0005 is 110x
+    under the kerf, and only degenerate splines are touched — the other 925 keep
+    their exact spline form, which keeps the file small and the geometry exact.
+    """
+    import ezdxf
+    from math import dist
+
+    doc = ezdxf.readfile(str(path))
+    msp = doc.modelspace()
+    victims = []
+    for e in list(msp):
+        if e.dxftype() != "SPLINE":
+            continue
+        cp = [(p[0], p[1]) for p in e.control_points]
+        if any(dist(cp[k], cp[k + 1]) < 1e-9 for k in range(len(cp) - 1)):
+            victims.append(e)
+    for e in victims:
+        pts = [(p[0], p[1]) for p in e.construction_tool().flattening(chord)]
+        msp.add_lwpolyline(pts, close=False)
+        msp.delete_entity(e)
+    if victims:
+        doc.saveas(str(path))
+    # Prove it: a silent partial repair here ships an unprofileable program.
+    again = ezdxf.readfile(str(path))
+    left = [e for e in again.modelspace() if e.dxftype() == "SPLINE"
+            and any(dist((e.control_points[k][0], e.control_points[k][1]),
+                         (e.control_points[k + 1][0], e.control_points[k + 1][1])) < 1e-9
+                    for k in range(len(e.control_points) - 1))]
+    if left:
+        raise RuntimeError(
+            f"{path.name}: {len(left)} degenerate spline(s) still present after "
+            f"repair — Fusion will refuse the profile; do not cut this file")
+    return [((e.control_points[0][0], e.control_points[0][1]),
+             (e.control_points[-1][0], e.control_points[-1][1])) for e in victims]
+
+
 def dxf_name(panel: str) -> str:
     return f"{BASENAME}-{panel}-{REV_TAG}.dxf"
 
@@ -234,6 +317,29 @@ MIN_SLIVER = 2 * PLASMA_KERF
 RASTER_PITCH = 0.005         # measurement resolution
 RIBBON_MIN_AREA = 0.004      # below this a patch is a whisker tip, not a ribbon
 MAX_THIN_RUN = 8 * PANEL_T_ACTUAL   # 0.957 — longest tolerable run of too-thin
+
+# A vector cusp arrives from the SVG as two adjacent curves that double back and
+# CROSS a few thousandths past their shared node. The contour is still closed, so
+# every endpoint/gap/wire check passes — Rev D art showed 55 of 55 closed wires,
+# max endpoint gap 2.4e-9", zero T-junctions — yet Fusion would not extrude the
+# right-hand tree, because a self-intersecting boundary cannot bound a face and
+# so is not a usable 2D profile either. Three were found in Rev D, the worst
+# 0.0078" out (0.15x kerf). Anything shorter than one kerf cannot survive in cut
+# steel, so trimming both curves back to the crossing changes nothing physical
+# (measured: +2.0e-5 in2 on 69.5 in2 of art, bbox unchanged). A self-overlap
+# LONGER than a kerf would change the part, so it fails instead of being healed.
+MAX_SPIKE = PLASMA_KERF      # 0.055 — longest cusp spike that is safe to trim
+
+# Trimming two curves to their crossing leaves whatever was BEYOND the crossing.
+# When the cusp ate most of a short curve, that remainder is a stub: Rev D left
+# a 0.0016" and a 0.0030" LINE where the art's next-shortest edge is 0.0588".
+# Fusion merges endpoints that close on import, which collapses a stub, opens
+# the loop and loses the profile again — the exact symptom the despike was
+# meant to cure, moved one step down the pipe. So no fragment the repair leaves
+# may be shorter than this; a too-short side is dropped and replaced by a
+# straight bridge instead. 0.010 is 5x under the kerf (invisible in cut steel)
+# and 10x above the thousandth-of-an-inch band where importers merge points.
+MIN_FRAGMENT = 0.010         # shortest curve fragment the repair may leave
 
 # Artwork cut into the face layer. Coupon uses the original tree; the real
 # cover uses artwork-final.dxf once Brian drops it in artwork/ (tree stands in
@@ -397,10 +503,10 @@ IN = 25.4  # STEP is mm; parts are scaled at origin then placed in mm.
 # every re-import arrives pre-tinted and appearance work isn't redone.
 COLORS = {
     "frame": Color(0.10, 0.10, 0.10),   # black
-    "middle": Color(0.62, 0.62, 0.62),  # light/medium gray contrast behind art
+    "middle": Color(0.60, 0.38, 0.12),  # burnished amber (Michelle, 2026-10-16)
     "face": Color(0.10, 0.10, 0.10),    # black
     "screw": Color(0.13, 0.13, 0.13),   # black oxide
-    "rivet": Color(0.80, 0.80, 0.82),   # aluminum
+    "rivet": Color(0.13, 0.13, 0.13),   # black (Michelle, 2026-10-16)
     "base-lower": Color(0.10, 0.10, 0.10),   # same hammered black as the frame
     "base-upper": Color(0.10, 0.10, 0.10),
     "tapcon": Color(0.45, 0.47, 0.50),       # bare masonry screw, installed last
@@ -493,6 +599,274 @@ def art_finals() -> list[Path]:
     )
 
 
+# Filled by artwork_face(); read by the self-intersection check so the gate and
+# the repair cannot disagree about what was found.
+ART_REPAIR: dict = {"trimmed": [], "left": [], "refitted": []}
+
+
+def wire_crossings(wire, node_tol: float = 1e-5) -> list[tuple]:
+    """Interior self-intersections of one contour, as (i, j, point, shared_node).
+
+    Exact (OCC curve/curve), with a bounding-box prefilter so only genuinely
+    nearby edge pairs cost an intersection call. Crossings AT a shared endpoint
+    are not defects: adjoining curves are supposed to meet there, and endpoints
+    coincide only to ~2e-9, so they are excluded by node_tol.
+    """
+    edges = list(wire.edges())
+    boxes = []
+    for e in edges:
+        bb = e.bounding_box()
+        boxes.append((bb.min.X, bb.max.X, bb.min.Y, bb.max.Y))
+    cell = 0.25
+    grid: dict = {}
+    for i, (x0, x1, y0, y1) in enumerate(boxes):
+        for gx in range(floor(x0 / cell), floor(x1 / cell) + 1):
+            for gy in range(floor(y0 / cell), floor(y1 / cell) + 1):
+                grid.setdefault((gx, gy), []).append(i)
+    found, seen = [], set()
+    for ids in grid.values():
+        for a in range(len(ids)):
+            for b in range(a + 1, len(ids)):
+                i, j = sorted((ids[a], ids[b]))
+                if (i, j) in seen:
+                    continue
+                seen.add((i, j))
+                ax0, ax1, ay0, ay1 = boxes[i]
+                bx0, bx1, by0, by1 = boxes[j]
+                if ax1 < bx0 or bx1 < ax0 or ay1 < by0 or by1 < ay0:
+                    continue
+                ea, eb = edges[i], edges[j]
+                try:
+                    hits = ea.find_intersection_points(eb)
+                except Exception:
+                    continue
+                if not hits:
+                    continue
+                node = None
+                for q in (ea @ 0, ea @ 1):
+                    for r in (eb @ 0, eb @ 1):
+                        if (q - r).length < 1e-6:
+                            node = q
+                ends = [ea @ 0, ea @ 1, eb @ 0, eb @ 1]
+                for pt in hits:
+                    if min((pt - q).length for q in ends) <= node_tol:
+                        continue
+                    found.append((i, j, pt, node))
+    return found
+
+
+def wire_crossings_at(wire, pairs: list) -> list[tuple]:
+    """Re-find the crossing on specific edge pairs — the backoff fast path."""
+    edges = list(wire.edges())
+    found = []
+    for i, j in pairs:
+        if i >= len(edges) or j >= len(edges):
+            continue
+        ea, eb = edges[i], edges[j]
+        try:
+            hits = ea.find_intersection_points(eb)
+        except Exception:
+            continue
+        node = None
+        for q in (ea @ 0, ea @ 1):
+            for r in (eb @ 0, eb @ 1):
+                if (q - r).length < 1e-6:
+                    node = q
+        ends = [ea @ 0, ea @ 1, eb @ 0, eb @ 1]
+        for pt in hits:
+            if min((pt - q).length for q in ends) <= 1e-5:
+                continue
+            found.append((i, j, pt, node))
+    return found
+
+
+def _trim_off_spike(edge, crossing, node):
+    """edge minus the piece between the crossing and the shared node.
+
+    param_at_point is unreliable AT an endpoint (it reported 0.0 for a point
+    provably at param 1.0), so which end carries the node is decided by distance.
+    """
+    u = edge.param_at_point(crossing)
+    node_at_param_1 = (edge @ 1 - node).length < (edge @ 0 - node).length
+    return edge.trim(0.0, u) if node_at_param_1 else edge.trim(u, 1.0)
+
+
+def degenerate_art_curves(art) -> list:
+    """Art curves carrying two coincident control points in a row.
+
+    An SVG corner node whose handle sits exactly on its anchor becomes a cubic
+    whose last two control points are identical, so the curve's derivative
+    VANISHES at that end. Geometrically the curve is fine and every topology
+    test passes it — closed loops, no crossings, endpoint gaps at 1e-9, nothing
+    sub-kerf — but Fusion will not build a profile from a region containing one,
+    so it can neither be extruded nor taken as a 2D CAM op.
+
+    Rev D carried exactly one, in the right-hand tree. Proven by experiment
+    rather than argument: that loop alone in a file would not profile, the same
+    loop re-emitted as a polyline would, the left-hand tree (146 splines, no
+    degenerates) profiled either way, and the whole coupon profiled once
+    flattened. Three earlier theories — the coupon clip, near-touching
+    boundaries, loop-to-loop contact — were all measured and ruled out.
+    """
+    from OCP.BRep import BRep_Tool
+
+    if art is None:
+        return []
+    found = []
+    for f in art.faces():
+        for w in f.wires():
+            for e in w.edges():
+                c = BRep_Tool.Curve_s(e.wrapped, 0.0, 0.0)
+                if not (hasattr(c, "NbPoles") and hasattr(c, "Pole")):
+                    continue        # a plain line has no poles to collapse
+                n = c.NbPoles()
+                if n < 2:
+                    continue
+                poles = [c.Pole(k) for k in range(1, n + 1)]
+                if min(poles[k].Distance(poles[k + 1])
+                       for k in range(n - 1)) < 1e-9:
+                    found.append(e)
+    return found
+
+
+def _undegenerate_wire(wire, log: list):
+    """Refit any vanishing-derivative curve in one contour as a plain spline.
+
+    Refit rather than nudged: moving the doubled control point would change the
+    curve by an amount nobody can predict from the outside, where interpolating
+    the SAME curve at 0.002 (27x under the kerf) reproduces it to a tolerance we
+    state. One edge in, one edge out, so edge indices stay put for the backoff
+    pass that reuses them.
+    """
+    from OCP.BRep import BRep_Tool
+
+    edges = list(wire.edges())
+    changed = 0
+    for i, e in enumerate(edges):
+        c = BRep_Tool.Curve_s(e.wrapped, 0.0, 0.0)
+        if not (hasattr(c, "NbPoles") and hasattr(c, "Pole")):
+            continue
+        n = c.NbPoles()
+        if n < 2:
+            continue
+        poles = [c.Pole(k) for k in range(1, n + 1)]
+        if min(poles[k].Distance(poles[k + 1]) for k in range(n - 1)) >= 1e-9:
+            continue
+        m = max(8, int(e.length / 0.002))
+        edges[i] = Edge.make_spline([e @ (t / m) for t in range(m + 1)])
+        log.append((e @ 0, e @ 1))
+        changed += 1
+    return (Wire(edges), changed) if changed else (wire, 0)
+
+
+def _bridge_spike(a, b, ta, tb, node):
+    """Replace a cusp with a straight bridge when trimming would leave a stub.
+
+    Keeps whichever curve has the longer surviving piece, pulls it back from the
+    shared node until the straight run to the other curve's FAR end is itself
+    longer than MIN_FRAGMENT, and returns that pair — the short curve is gone,
+    replaced by the bridge, so nothing sub-tolerance survives. The bridge is at
+    most a few hundredths long against a 0.055 kerf, so the cut cannot show it.
+    Returns None if no pull-back satisfies both floors; the caller then reports
+    the crossing UNREPAIRED and the gate fails rather than shipping a stub.
+    """
+    keep, drop, keep_trim = (a, b, ta) if ta.length >= tb.length else (b, a, tb)
+    keep_node_at_1 = (keep @ 1 - node).length < (keep @ 0 - node).length
+    drop_node_at_1 = (drop @ 1 - node).length < (drop @ 0 - node).length
+    far = drop @ (0.0 if drop_node_at_1 else 1.0)
+    back = MIN_FRAGMENT
+    for _ in range(14):
+        f = 1.0 - back / keep.length if keep_node_at_1 else back / keep.length
+        if not 0.01 < f < 0.99:
+            return None
+        trimmed = keep.trim(0.0, f) if keep_node_at_1 else keep.trim(f, 1.0)
+        tip = trimmed @ (1.0 if keep_node_at_1 else 0.0)
+        if (trimmed.length >= MIN_FRAGMENT
+                and (tip - far).length >= MIN_FRAGMENT):
+            bridge = Edge.make_line(tip, far)
+            return (trimmed, bridge) if keep is a else (bridge, trimmed)
+        back *= 1.4
+    return None
+
+
+def despike_wire(wire, log: list, known: list | None = None):
+    """Trim sub-kerf cusp spikes out of one contour. See MAX_SPIKE.
+
+    `known` is a list of (i, j) edge pairs from an earlier pass over the same
+    contour at a different scale; given it, the crossing is recomputed only for
+    those pairs instead of searching every near-neighbour pair.
+    """
+    if known is None:
+        hits = wire_crossings(wire)
+    else:
+        hits = wire_crossings_at(wire, known)
+    if not hits:
+        return wire, 0, [(i, j) for i, j, _, _ in hits]
+    edges = list(wire.edges())
+    done, fixed = set(), 0
+    for i, j, pt, node in hits:
+        reach = None if node is None else (pt - node).length
+        # Not a cusp spike, or an edge already trimmed for another crossing:
+        # leave it, and let the check fail loudly rather than heal it blindly.
+        if node is None or reach > MAX_SPIKE or i in done or j in done:
+            log.append(("UNREPAIRED", pt, reach))
+            continue
+        ta = _trim_off_spike(edges[i], pt, node)
+        # Trim the second curve to where the FIRST one actually landed, not to
+        # the computed crossing: two curves trimmed independently to one point
+        # each round off on their own, and the DXF exporter writes per-edge
+        # geometry, so the leftover differed by 7e-8" at one of the three.
+        realized = ta @ 1 if (ta @ 1 - pt).length < (ta @ 0 - pt).length else ta @ 0
+        tb = _trim_off_spike(edges[j], realized, node)
+        if ta.length >= MIN_FRAGMENT and tb.length >= MIN_FRAGMENT:
+            edges[i], edges[j] = ta, tb
+        else:
+            bridged = _bridge_spike(edges[i], edges[j], ta, tb, node)
+            if bridged is None:
+                log.append(("UNREPAIRED", pt, reach))
+                continue
+            edges[i], edges[j] = bridged
+        done |= {i, j}
+        fixed += 1
+        log.append(("trimmed", pt, reach))
+    pairs = [(i, j) for i, j, _, _ in hits]
+    return (Wire(edges), fixed, pairs) if fixed else (wire, 0, pairs)
+
+
+def despike_art(art, pairs: dict | None = None):
+    """Art with cusp spikes trimmed. Returns (healed, log, left, pairs).
+
+    Detection is the expensive half (an exact curve/curve intersection per
+    near-neighbour edge pair). Which edge pairs cross is a property of the
+    contour, not of its size, so the backoff loop re-scales the SAME art and
+    can be handed the pairs found on the first pass: pass `pairs` to re-trim
+    the known spots and skip both the search and the verify. `left` is then
+    None, meaning UNVERIFIED — only a full pass (pairs=None) returns the list
+    the gate is allowed to trust.
+    """
+    log: list = []
+    degen: list = []
+    found: dict = {}
+    faces = []
+    for fi, f in enumerate(art.faces()):
+        wires = []
+        for wi, w in enumerate([f.outer_wire()] + list(f.inner_wires())):
+            # Vanishing derivatives first: a clean curve is what the cusp
+            # repair should be trimming, and the refit keeps edge indices.
+            w, _ = _undegenerate_wire(w, degen)
+            known = None if pairs is None else pairs.get((fi, wi), [])
+            healed_w, _, hits = despike_wire(w, log, known)
+            found[(fi, wi)] = hits
+            wires.append(healed_w)
+        faces.append(Face(wires[0], wires[1:]) if len(wires) > 1 else Face(wires[0]))
+    healed = faces[0] if len(faces) == 1 else Compound(children=faces)
+    left = None
+    if pairs is None:
+        left = [h for f in healed.faces() for w in f.wires() for h in wire_crossings(w)]
+    ART_REPAIR["refitted"] = degen
+    return healed, log, left, found
+
+
 def artwork_face():
     """The art as a single Face, scaled and centered onto the panel — or None."""
     if COUPON:
@@ -517,12 +891,41 @@ def artwork_face():
     s = min((W - 2 * ART_MARGIN) / bb.size.X, (H - 2 * ART_BAND) / bb.size.Y)
     # Fit as large as possible, then back off until the kernel proves the art
     # clears every fastener keep-out zone (first run grazed a rivet by 0.0002).
+    #
+    # Despike BEFORE the clearance test, not after. A self-intersecting face is
+    # invalid, and OCC booleans against an invalid face fail globally, not just
+    # near the defect: Rev D art reported overlap 0.000000 at bolt (-3.500,
+    # -6.604) while truly invading it by 0.000772 in2, so the backoff never
+    # fired. Heal first and the kernel answers honestly. MAX_SPIKE is a shop
+    # dimension (one kerf), so despiking happens at final panel scale.
+    def fitted(scale):
+        a = raw.scale(scale)
+        c = a.bounding_box().center()
+        return Pos(-c.X, -c.Y) * a
+
+    pairs = None
     for _ in range(10):
-        art = raw.scale(s)
-        c = art.bounding_box().center()
-        art = Pos(-c.X, -c.Y) * art
+        art, log, _, pairs = despike_art(fitted(s), pairs)
         if art_hole_overlap(art) < 1e-6:
             print(f"  artwork: fit at scale {s:.4f}")
+            # Backoff passes reuse the first pass's edge pairs and do not
+            # verify. Re-heal the accepted scale from scratch so the gate is
+            # reading a full, independent search of the geometry being shipped.
+            art, log, left, _ = despike_art(fitted(s))
+            ART_REPAIR["trimmed"] = [r for r in log if r[0] == "trimmed"]
+            ART_REPAIR["left"] = left
+            if ART_REPAIR["refitted"]:
+                print(f"  artwork: refitted {len(ART_REPAIR['refitted'])} curve(s) "
+                      f"whose derivative vanished at an end (Fusion will not "
+                      f"profile a region containing one):")
+                for p0, p1 in ART_REPAIR["refitted"]:
+                    print(f"    ({p0.X:+.4f}, {p0.Y:+.4f}) -> ({p1.X:+.4f}, {p1.Y:+.4f})")
+            if ART_REPAIR["trimmed"]:
+                print(f"  artwork: trimmed {len(ART_REPAIR['trimmed'])} cusp "
+                      f"spike(s) — self-crossings Fusion cannot profile:")
+                for _, pt, reach in ART_REPAIR["trimmed"]:
+                    print(f"    ({pt.X:+.4f}, {pt.Y:+.4f})  {reach:.5f}\" out "
+                          f"= {reach / PLASMA_KERF:.2f}x kerf")
             return art
         s *= 0.98
     raise RuntimeError("artwork cannot clear fastener holes even at 82% of max fit")
@@ -611,6 +1014,63 @@ def art_hole_overlap(art) -> float:
         common = art & zone
         bad += getattr(common, "area", 0.0)
     return bad
+
+
+def min_art_edge(art):
+    """Shortest single curve in the art, as (length, point) — or None.
+
+    A curve far below the kerf cannot be cut as anything and is what importers
+    merge away, taking the loop's closure with it. Rev D shipped two 0.0016 and
+    0.0030 LINEs here (stubs left by the cusp repair) in a file whose next
+    shortest edge was 0.0588, and Fusion dropped the profile again.
+    """
+    if art is None:
+        return None
+    worst = None
+    for f in art.faces():
+        for w in f.wires():
+            for e in w.edges():
+                if worst is None or e.length < worst[0]:
+                    worst = (e.length, e @ 0.5)
+    return worst
+
+
+def min_art_hole_web(art):
+    """Thinnest steel left between an art cut and a drilled fastener hole.
+
+    The keep-out check asks only whether the art BOUNDARY invades a hole zone.
+    What the shop actually gets is narrower: the art cut takes half a kerf off
+    the boundary toward the hole, and the hole is drilled to full size. So the
+    surviving web is  distance(centre, art) - hole_radius - KERF/2 . Reported,
+    not gated — the gate's criterion is Brian's call (see BRIEF open items).
+    """
+    if art is None:
+        return None
+    holes = [(p, BOLT_CLEAR_DIA) for p in corner_pattern()] + [
+        (p, RIVET_HOLE_DIA) for p in rivet_pattern()
+    ]
+    edges = [e for f in art.faces() for w in f.wires() for e in w.edges()]
+    worst = None
+    for (hx, hy), dia in holes:
+        reach = dia / 2 + 0.6          # only edges that could possibly be nearest
+        best = None
+        for e in edges:
+            bb = e.bounding_box()
+            if (bb.min.X - hx > reach or hx - bb.max.X > reach
+                    or bb.min.Y - hy > reach or hy - bb.max.Y > reach):
+                continue
+            n = max(8, int(e.length / 0.004))
+            for t in range(n + 1):
+                q = e @ (t / n)
+                d = hypot(q.X - hx, q.Y - hy)
+                if best is None or d < best[0]:
+                    best = (d, q)
+        if best is None:
+            continue
+        web = best[0] - dia / 2 - PLASMA_KERF / 2
+        if worst is None or web < worst[0]:
+            worst = (web, (hx, hy), best[1], best[0], dia)
+    return worst
 
 
 def thin_features(art) -> dict:
@@ -728,6 +1188,9 @@ def bar_bearing_off_centre() -> float:
 
 def run_checks(art=None) -> list[tuple[str, bool, str]]:
     cuts = thin_features(art)
+    web = min_art_hole_web(art)
+    short = min_art_edge(art)
+    degen = degenerate_art_curves(art)
     clamped = 2 * PANEL_T
     d = SOLID["shank_dia"]
     tail_ratio = (RIVET_LEN - clamped) / d
@@ -883,10 +1346,18 @@ def run_checks(art=None) -> list[tuple[str, bool, str]]:
             PILOT_DIA <= min(RIVET_HOLE_DIA, TAP_DRILL_DIA, BOLT_CLEAR_DIA) - 0.01,
             f"pilot {frac(PILOT_DIA)} <= smallest finish {frac(min(RIVET_HOLE_DIA, TAP_DRILL_DIA, BOLT_CLEAR_DIA))} - 0.01",
         ),
+        # Criterion unchanged (boundary must not enter a hole zone); the message
+        # also reports the post-kerf web, which is the number the shop feels.
         (
             "artwork clears every fastener hole",
             art_hole_overlap(art) < 1e-6,
-            f"overlap area {art_hole_overlap(art):.6f} (kernel-verified boolean)",
+            f"overlap area {art_hole_overlap(art):.6f} (kernel-verified boolean)"
+            + ("" if web is None else
+               f"; thinnest post-kerf web {web[0]:.4f} at hole "
+               f"({web[1][0]:+.3f},{web[1][1]:+.3f}) — art edge {web[3]:.4f} from "
+               f"centre, hole r {web[4] / 2:.4f}, half-kerf {PLASMA_KERF / 2:.4f}"
+               + (f" [UNDER MIN_WEB {MIN_WEB:.4f} — reported, not gated]"
+                  if web[0] < MIN_WEB else "")),
         ),
         # Found 2026-10-15 while the art was mid-swap: the auto-pick is
         # alphabetical, so a second "final" file can silently win over the newer
@@ -991,6 +1462,45 @@ def run_checks(art=None) -> list[tuple[str, bool, str]]:
             f"{len(corner_pattern())} bolts + {len(rivet_pattern())} rivets, "
             f"no shared positions",
         ),
+        # Rev D shipped art that passed every endpoint test — 55/55 closed
+        # wires, 2.4e-9" worst gap, no T-junctions — and still would not
+        # extrude in Fusion, because two contours crossed in their INTERIORS.
+        # No gap check can see that. This is the gate; MAX_SPIKE is the repair.
+        # The cusp repair used to trim both curves to the crossing and keep
+        # whatever lay beyond, which on a short curve is a stub. Two of them
+        # (0.0016, 0.0030) shipped in Rev D and Fusion lost the profile again,
+        # so the repair now bridges instead — and this proves it did.
+        (
+            f"no art edge shorter than {MIN_FRAGMENT:.3f} (importers merge those away)",
+            short is None or short[0] >= MIN_FRAGMENT,
+            "no artwork" if short is None else
+            f"shortest art edge {short[0]:.4f} at ({short[1].X:+.4f},{short[1].Y:+.4f})"
+            f" >= {MIN_FRAGMENT:.3f} ({short[0] / PLASMA_KERF:.2f}x kerf)",
+        ),
+        # Cost three wrong theories and a round of experiments to find: ONE
+        # curve out of 926, with its last two control points identical.
+        (
+            "no art curve has a vanishing end derivative (Fusion drops the profile)",
+            len(degen) == 0,
+            "no artwork" if art is None else
+            f"{len(degen)} degenerate curve(s)"
+            + (f", refitted {len(ART_REPAIR['refitted'])} on import"
+               if ART_REPAIR["refitted"] else "")
+            + ("" if not degen else
+               " STILL PRESENT at " + ", ".join(
+                   f"({(e @ 0).X:+.4f},{(e @ 0).Y:+.4f})" for e in degen[:4])),
+        ),
+        (
+            "no art contour crosses itself (Fusion cannot profile one that does)",
+            len(ART_REPAIR["left"]) == 0,
+            ("no artwork" if art is None else
+             f"{len(ART_REPAIR['left'])} crossing(s) left after trimming "
+             f"{len(ART_REPAIR['trimmed'])} sub-kerf cusp spike(s)"
+             + ("" if not ART_REPAIR["left"] else
+                " — TOO BIG TO HEAL, fix the artwork at "
+                + ", ".join(f"({h[2].X:+.4f},{h[2].Y:+.4f})"
+                            for h in ART_REPAIR["left"][:4]))),
+        ),
         (
             "BRIEF current revision matches script REV",
             f"Current revision: **{REV}**" in BRIEF_PATH.read_text(),
@@ -1068,7 +1578,7 @@ def write_bom(out_path: Path) -> Path:
         (f"Tapcon {TAPCON} (masonry screw)", "frame → brick",
          f"{len(tapcon_pattern()) or 4} (box incl. "
          f"{frac(TAPCON_MASONRY_PILOT)} carbide pilot bit)", "hardware store"),
-        ("Spray: hammered black (face + frame); satin light gray (middle)", "finish",
+        ("Spray: hammered black (face + frame); burnished amber (middle)", "finish",
          "1 can each", "hardware store"),
     ]
     lines = [
@@ -1235,13 +1745,17 @@ Face (art cut in) + middle (plain), plasma-cut with {frac(PILOT_DIA)}" pilot hol
 ## 4. Finish (before bench assembly)
 
 - Face + frame: **hammered black** rattle-can (Rust-Oleum Hammered or equiv).
-- Middle: field = light gray, **textured — technique TBD** (leading options:
-  engine-turned swirls + clear coat, or gray stone-texture rattle can; texture
-  scale must stay fine — it shows only through cutout slivers).
+- Middle: field = **burnished amber** (Michelle's choice, 2026-10-16). Confirm the
+  exact product before spraying. If it is textured, texture scale must stay fine —
+  it shows only through the cutout slivers.
   **Middle EDGES painted black** (all 4 sides) — no gray stripe on the assembly edge.
 - Prep beats paint: degrease, scuff/flap-disc the mill scale off show faces,
   clean out plasma dross from the art edges — hammered hides grind marks, not grease.
-- Paint AFTER all drilling/tapping, BEFORE riveting (rivets stay bright aluminum).
+- Paint AFTER all drilling/tapping, BEFORE riveting.
+- **Rivets finish BLACK** (Michelle's choice, 2026-10-16) — the catalog rivet is
+  bright 1100 aluminum, so either source a black rivet or blacken the {n_riv} heads
+  after bucking. Settle this BEFORE paint day: bucking a set rivet mars the head,
+  so touching them in afterwards has to match hammered black on a show face.
 - MASK the {n_bolt} tapped holes in the frame (paint in threads binds bolts —
   or chase threads after).
 - The {n_tap} brick-mount countersinks ARE painted (they're drilled in the shop now).
@@ -1304,18 +1818,35 @@ def write_camsheet(out_path: Path, has_art: bool) -> Path:
     text = f"""# Bonebrake Cover — CAM Sheet  (Rev {REV}, {W:.3f} x {H:.3f})
 
 Generated by bonebrake_assembly.py at Rev {REV} — regenerate, don't hand-edit.
-Import each DXF: Insert DXF, **Units = Inch** (dialog ignores the file's declared units).
+Import each DXF: Insert DXF, **Units = Inch** (dialog ignores the file's declared units), and turn ON the option that makes **one sketch per layer**.
+
+Every DXF ships on two layers so the two ops never have to be separated by hand:
+
+| Layer | Contents | Which op |
+|---|---|---|
+| `PILOTS` | the pilot circles, nothing else | Op 1 |
+| `CUTS` | art, outline, everything else | Op 2 |
+
+Select the whole sketch for each op. Do NOT pick contours individually — on a file with dozens of them that is how pilots end up in the profiles op by accident.
 Post programs named to match the rev — `{BASENAME}-face-{REV_TAG}.gcode`, `{BASENAME}-middle-{REV_TAG}.gcode` (Fusion suggests "1001"; overwrite it — .gcode is our extension, it's what Jimmie expects) — and attach to the PPBO Job, removing superseded revs.
 
 ## Programs to cut
 
 {program_table()}
 
-Two ops per panel; the ONLY difference between panels is the face's artwork.
+Two ops per panel, **one gcode file per panel**. Operations are not programs: post the
+SETUP, not the individual ops, and Fusion writes both into a single NC file in
+browser-tree order. Same tool (the torch) in both, so there is no tool change between
+them — only comp and lead settings differ, and those are already baked into the
+toolpath coordinates by the time it posts. Jimmie runs one file per panel.
+
+**Order matters: drag Op 1 (pilots) ABOVE Op 2 (profiles).** Pierce the holes while the
+blank is still fully attached and rigid; cut the outline first and you are piercing a
+part that is already free to move and has taken heat.
 
 ## Op 1 — pilot holes only (small-hole recipe, both panels)
 
-Select: the {n_pilots}x {frac(PILOT_DIA)}" pilot circles and NOTHING else.
+Select: the **`PILOTS`** sketch — the {n_pilots}x {frac(PILOT_DIA)}" pilot circles, and NOTHING else.
 
 | Setting (tab → group) | Value |
 |---|---|
@@ -1333,7 +1864,9 @@ Why: normal comp refuses profiles under ~{frac(PLASMA_MIN_HOLE)}" and the defaul
 | {face_dxf} | {art_line} |
 | {middle_dxf} | outer profile only |
 
-Settings: normal Sideways Compensation (kerf {PLASMA_KERF:.3f}" stays in CAM), standard leads/pierce. Do NOT include the pilot circles in this op — they're Op 1's.
+Settings: normal Sideways Compensation (kerf {PLASMA_KERF:.3f}" stays in CAM), standard leads/pierce. Select the **`CUTS`** sketch — it already excludes the pilots, which are Op 1's.
+
+**Check the kerf set in the tool before posting.** A coupon posted 2026-10-16 carried `jetDiameter = 0.0315` (0.8 mm — the NOZZLE BORE) and compensated for a 0.0472" kerf, against the {PLASMA_KERF:.3f}" this design assumes. A consumable's stated orifice is not its cut width; the arc flares wider. The coupon settles it — acceptance item 1 on the coupon sheet.
 """
     out_path.write_text(text)
     return out_path
@@ -1383,6 +1916,12 @@ def main() -> None:
         exporter.add_shape(sk)
         dxf_path = OUT_STEP.parent / dxf_name(panel_name)
         exporter.write(str(dxf_path))
+        fixed = repair_degenerate_splines(dxf_path)
+        tally = layer_split_dxf(dxf_path)
+        print(f"  layers: PILOTS {tally['PILOTS']} entities, CUTS {tally['CUTS']}")
+        for p0, p1 in fixed:
+            print(f"  repaired degenerate spline ({p0[0]:+.4f},{p0[1]:+.4f}) -> "
+                  f"({p1[0]:+.4f},{p1[1]:+.4f}) — re-emitted as polyline")
         print(f"wrote {dxf_path.name}")
 
     # One-page drill map for the bench — regenerated every run, in writing.

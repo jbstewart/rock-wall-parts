@@ -33,7 +33,17 @@ import bonebrake_assembly as ba
 ZONE_A = (-13.4, -9.4)   # panel y: densest band, worst steel run, one pilot row
 ZONE_B = (4.5, 6.5)      # panel y: worst art ribbon
 
-LADDER_W = [0.040, 0.060, 0.080, 0.100, 0.120, 0.160]   # web widths
+# Web widths. The WEB is the specimen, not the slots either side of it, so
+# every rung has to be a web the torch can actually leave behind: narrower
+# than one kerf and the two cuts are closer together than the arc is wide,
+# which is where comp error and kerf variation merge them into one hole.
+# A 0.040 rung shipped in Rev D at 0.73x kerf — below the art's own thinnest
+# feature (0.0700) and a third of MIN_WEB, so it could only ever have failed,
+# and Fusion fused its pairs rather than post it. Replaced by 0.140, which
+# puts rungs either side of the MIN_WEB gate (0.120 / 0.140 vs 0.1196) where
+# the answer actually matters. Lowest rung 0.060 = 1.09x kerf: producible,
+# and deliberately marginal, because that is the question being asked.
+LADDER_W = [0.060, 0.080, 0.100, 0.120, 0.140]          # web widths
 LADDER_L = [0.25, 0.50, 1.00, 2.00]                     # web lengths
 SLOT = 0.18          # cut-away either side of each web; > 2x kerf so it opens
 ROW_GAP = 0.30
@@ -126,6 +136,15 @@ def checks(sk, lay, art) -> list[tuple[str, bool, str]]:
         ("ladder slots open under the normal-comp recipe",
          SLOT >= 2 * ba.PLASMA_KERF,
          f"slot {SLOT:.3f} >= 2 x kerf {2 * ba.PLASMA_KERF:.3f}"),
+        # The slot check above says the HOLES open. This says the WEBS between
+        # them survive being cut — the specimen, and the thing Rev D missed.
+        ("every ladder web is wider than one kerf",
+         min(LADDER_W) > ba.PLASMA_KERF,
+         f"narrowest web {min(LADDER_W):.3f} = "
+         f"{min(LADDER_W) / ba.PLASMA_KERF:.2f}x kerf {ba.PLASMA_KERF:.3f}"
+         + (f"; {sum(1 for w in LADDER_W if w < 1.5 * ba.PLASMA_KERF)} rung(s) "
+            f"under 1.5x kerf are marginal by design"
+            if any(w < 1.5 * ba.PLASMA_KERF for w in LADDER_W) else "")),
         ("ladder brackets the real art's thickness range",
          min(LADDER_W) < min(r["thick"] for r in cuts["webs"])
          and max(LADDER_W) > max(r["thick"] for r in cuts["webs"]),
@@ -170,8 +189,28 @@ def sheet(lay, cuts, inA, inB) -> str:
              f"(longest steel run {cuts['longest_web_run']:.3f}), but the limit itself has "
              f"never been proven on this machine. Zone C locates it.")
     L.append("")
+    # Pilots that land inside a zone come across with it, and they are the ones
+    # the default linking constraints silently discard.
+    n_pilot = sum(
+        1 for _, py in ba.corner_pattern() + ba.rivet_pattern()
+        if ZONE_A[0] <= py <= ZONE_A[1] or ZONE_B[0] <= py <= ZONE_B[1]
+    )
     L.append("## Cut it the way the panel will be cut")
     L.append("")
+    L.append("- **TWO ops, ONE gcode file.** Operations are not programs: post the SETUP")
+    L.append("  and Fusion writes both ops into a single NC file, in browser-tree order.")
+    L.append("  Same torch in both, so no tool change. Put the pilot op FIRST, so the holes")
+    L.append("  are pierced while the blank is still fully attached and rigid.")
+    L.append(f"- The DXF ships on two layers — **`PILOTS`** ({n_pilot} circles) and **`CUTS`**")
+    L.append("  (everything else). Insert DXF with the **one-sketch-per-layer** option on, then")
+    L.append("  each op selects a whole sketch. Never pick contours by hand on this file.")
+    L.append(f"- The {n_pilot} pilot circles go in their own holes-only op:")
+    L.append("  Sideways Compensation = **Center**, Lead-In (Entry) and")
+    L.append("  Lead-Out (Exit) both **unchecked**, Pierce Clearance = **0.00 in**. The")
+    L.append(f"  default 0.059 pierce clearance plus a 0.020 lead needs 0.079 inside a")
+    L.append(f"  {ba.PILOT_DIA / 2:.4f} radius, so Fusion discards the pass and the hole never")
+    L.append("  gets cut. Everything else (art, outline, ladder slots) is a normal-comp op")
+    L.append("  with standard leads, and must NOT include the pilot circles.")
     L.append("- Same CAM setup as the panel programs (see the CAM sheet), same consumables")
     L.append("  at their current wear state — note the tip hours on this sheet.")
     L.append("- **Same cut ordering and the same back-to-back timing.** A coupon cut")
@@ -219,15 +258,26 @@ def sheet(lay, cuts, inA, inB) -> str:
     L.append("")
     L.append("## Acceptance — measure, don't eyeball")
     L.append("")
-    L.append("1. **Ladder survival** per cell, table above.")
-    L.append("2. **Flatness across the WHOLE coupon** — straightedge + feeler, record the")
+    L.append(f"1. **Measured kerf.** Caliper a ladder SLOT (drawn {SLOT:.3f}) and a surviving")
+    L.append(f"   WEB (drawn width, table above). With normal comp the finished size matches")
+    L.append(f"   the drawing only when the kerf set in CAM equals the real kerf; if the real")
+    L.append(f"   kerf is wider, slots come out wide and webs come out narrow by the same")
+    L.append(f"   amount. So: real kerf = {ba.PLASMA_KERF:.3f} + (slot_measured - {SLOT:.3f}).")
+    L.append(f"   The design assumes **{ba.PLASMA_KERF:.3f}\"**, which sets MIN_SLIVER (2x kerf),")
+    L.append("   the ladder floor, the pilot-size check and every post-kerf web figure — so if")
+    L.append("   this comes back materially different, `PLASMA_KERF` changes and the panel")
+    L.append("   gets re-checked before cutting. NOTE: a consumable's stated orifice (e.g.")
+    L.append("   0.8 mm) is NOT the kerf — the arc flares, so cut width runs wider, typically")
+    L.append("   1.5-2x the bore. Measure, don't read it off the box.")
+    L.append("2. **Ladder survival** per cell, table above.")
+    L.append("3. **Flatness across the WHOLE coupon** — straightedge + feeler, record the")
     L.append("   worst gap and where. This is the one that scales to the panel: what kills")
     L.append("   the assembly is the face not seating on the frame, not an ugly cut.")
-    L.append("3. **Local curl** at each surviving thin feature — a web can survive and still")
+    L.append("4. **Local curl** at each surviving thin feature — a web can survive and still")
     L.append("   stand proud.")
-    L.append("4. **Dross / tags** on the thin features, and whether they clean up without")
+    L.append("5. **Dross / tags** on the thin features, and whether they clean up without")
     L.append("   eating the feature.")
-    L.append("5. **Detail loss** — compare zone A and B against the DXF. Tips will round;")
+    L.append("6. **Detail loss** — compare zone A and B against the DXF. Tips will round;")
     L.append("   record how much, because that is what the customer sees.")
     L.append("")
     L.append("## What this coupon cannot tell you")
@@ -267,6 +317,13 @@ def main():
     ex = ExportDXF(unit=Unit.IN)
     ex.add_shape(sk)
     ex.write(str(OUT_DXF))
+    # Repair first, THEN layer: a spline re-emitted as a polyline by the repair
+    # would otherwise land back on layer 0 and miss the split.
+    for p0, p1 in ba.repair_degenerate_splines(OUT_DXF):
+        print(f"  repaired degenerate spline ({p0[0]:+.4f},{p0[1]:+.4f}) -> "
+              f"({p1[0]:+.4f},{p1[1]:+.4f}) — re-emitted as polyline")
+    tally = ba.layer_split_dxf(OUT_DXF)
+    print(f"  layers: PILOTS {tally['PILOTS']} entities, CUTS {tally['CUTS']}")
     print(f"\nwrote {OUT_DXF.name}")
     OUT_SHEET.write_text(sheet(lay, cuts, inA, inB))
     print(f"wrote {OUT_SHEET.name}")
