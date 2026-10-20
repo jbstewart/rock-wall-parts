@@ -5,7 +5,7 @@
   $Date: 2026-07-13 $
 */
 
-description = "ArcDroid plasma cutter";
+description = "ArcDroid plasma cutter RWF rev header";
 vendor = "ArcDroid CNC";
 vendorUrl = "https://arcdroidcnc.com/";
 legal = "";
@@ -42,7 +42,9 @@ properties = {
   delayStop: 0.1, // cutter stop delay
   probe: true,
   useZAxis: true,
-  pierceHeight: spatial(2.0, MM)
+  pierceHeight: spatial(2.0, MM),
+  partName: "", // part name or drawing number written in the header,
+  partRev: "" // revision letter written in the header, ASME Y14.35 style
 };
 
 // user-defined property definitions
@@ -59,7 +61,9 @@ propertyDefinitions = {
   sequenceNumberStart: {title:"Start sequence number", description:"The number at which to start the sequence numbers.", group:1, type:"integer"},
   sequenceNumberIncrement: {title:"Sequence number increment", description:"The amount by which the sequence number is incremented by in each block.", group:1, type:"integer"},
   useRetracts: {title:"Use retracts", description:"Output retracts, otherwise only output part contours for importing into a third-party jet application.", type:"boolean"},
-  separateWordsWithSpace: {title:"Separate words with space", description:"Adds spaces between words if 'yes' is selected.", type:"boolean"}
+  separateWordsWithSpace: {title:"Separate words with space", description:"Adds spaces between words if 'yes' is selected.", type:"boolean"},
+  partName: {title:"Part name", description:"Part name or drawing number, written as a header comment.", group:0, type:"string"},
+  partRev: {title:"Part revision", description:"Revision letter, written as a header comment and checked against the build sheet before cutting.", group:0, type:"string"}
 };
 
 var gFormat = createFormat({prefix:"G", decimals:0});
@@ -125,6 +129,15 @@ function onOpen() {
   }
   if (programComment) {
     writeComment(programComment);
+  }
+
+  if (properties.partName || properties.partRev) {
+    var header = "PART " + (properties.partName ? properties.partName : "UNNAMED");
+    if (properties.partRev) {
+      header += " REV " + String(properties.partRev).toUpperCase();
+    }
+    writeComment(header);
+    writeComment("POSTED " + new Date().toISOString().substring(0, 10));
   }
 
   // dump machine configuration
@@ -426,7 +439,7 @@ var deviceOn = false;
 function addPierceHeight(enabled) {
   zFormat.setOffset(enabled ? properties.pierceHeight : 0);
   zOutput = createVariable({prefix:"Z"}, zFormat);
-  writeComment("pierceHeight " + (enabled ? "added" : "removed"));
+  // writeComment("pierceHeight " + (enabled ? "added" : "removed"));
 }
 
 function setDeviceMode(enable) {
