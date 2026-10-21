@@ -32,7 +32,7 @@ Superseded output files are never deleted outright. They are moved to a per-job 
 
 - Fusion import: STEP via Insert CAD into an inch design; DXF via Insert DXF with Units = Inch.
 - The plasma table (ArcDroid) cuts **no finished holes**. Every hole is cut as a 1/8" pilot and drilled to final size per the generated drill schedules. Final sizes come from a fractional drill index with per-role rounding: clearance holes round UP, rivet fits stay snug, tap drills use the published fractional equivalent.
-- Pilots use a dedicated small-hole recipe: a separate holes-only 2D Profile op with Sideways Compensation = Center, Lead-In/Lead-Out unchecked, Pierce Clearance = 0. Normal-compensation profiles handle the outline and artwork; kerf compensation stays in CAM, never in the geometry.
+- Pilots use a dedicated small-hole recipe, revised 2026-10-21: a separate holes-only 2D Profile op with Sideways Compensation = Left, In computer; lead-in ON at 0.020 linear perpendicular, radius 0; Pierce Clearance = 0.020 in (0.5 mm); kerf 1.4 mm carried on the tool. This supersedes the earlier Center / leads-off / Pierce Clearance 0 recipe, which existed because the tool carried no measured kerf. 0.020 is the floor that still lets a 1/8" hole generate with lead-in on: Fusion drops any contour where lead-in plus clearance will not fit, and it does so silently, so the toolpath count gets checked against the contour count after every Generate. Standard-compensation profiles still handle the outline and artwork, and kerf compensation stays in CAM, never in the geometry. Source: `areas/fabrication/ArcDroid-Cut-Profile-Runbook.md` in pp-operations (sections 9 and 10).
 
 ## Division of labor
 

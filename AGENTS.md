@@ -20,7 +20,7 @@ Parametric code-CAD parts library for Rock Wall Forge / Rock Wall Manufacturing 
 - **Keep the BRIEF synced with every parameter change.** The brief is the spec; a drifted brief is a bug.
 - **Every job carries a `REV` letter** (ASME Y14.35 letters — skip I O Q S X Z, then AA, AB…), stamped into every output filename (`-revA`) and document header, matched by the BRIEF's "Current revision" line (generation check) and its revision-history table. Bump on any form/fit/function change; gcode posted from Fusion is named to match. Released files live as attachments on the PPBO Job — superseded revs are removed there when a new rev is attached.
 - **Artwork is imported, never generated.** SVG or DXF; auto-fit + kernel-verified clearance with auto-backoff. Never hand-cut art in Fusion — regeneration wipes it.
-- **Plasma cuts no finished holes** — 1/8" pilots (small-hole CAM recipe: holes-only op, Sideways Comp = Center, Lead-In/Out = Off, Pierce Clearance = 0; per-job settings live in the generated CAM sheet), drilled to final per generated schedules. As-built hole sizes come from a fractional drill index with per-role rounding (clearance UP; snug fits 1/64 granularity; tap = published fractional equivalent).
+- **Plasma cuts no finished holes** — 1/8" pilots (small-hole CAM recipe, revised 2026-10-21: holes-only op, Sideways Comp = **Left, In computer**, lead-in **ON at 0.020 linear perpendicular**, Pierce Clearance **0.020 in (0.5 mm)**, kerf **1.4 mm** on the tool — supersedes the old Center / leads-off / clearance-0 recipe; source is `areas/fabrication/ArcDroid-Cut-Profile-Runbook.md` in pp-operations, and per-job settings live in the generated CAM sheet), drilled to final per generated schedules. As-built hole sizes come from a fractional drill index with per-role rounding (clearance UP; snug fits 1/64 granularity; tap = published fractional equivalent).
 - **Hardware = McMaster catalog STEPs** in `lib/hardware/` ("3-D STEP no threads"; filename `<type>-<head/drive>-<thread>x<length>-<finish>-<sku>.step`); auto-oriented by `normalize_fastener()`. SKU in the filename feeds the generated BOM. Parametric primitives are the fallback.
 - **Fab documents are generated, never hand-edited**: DXFs from the same sketches as the solids, cut list, drill schedules, drill map, BOM (costs from `lib/materials.py` price book), build sheet. Regenerate; don't patch outputs.
 - **Fab prints state requirements, not technique** — acceptance criteria for the welder, not welding lessons.
@@ -32,6 +32,7 @@ Parametric code-CAD parts library for Rock Wall Forge / Rock Wall Manufacturing 
 ```sh
 .venv/bin/python projects/bonebrake-cover/bonebrake_assembly.py          # real cover → output/
 .venv/bin/python projects/bonebrake-cover/bonebrake_assembly.py coupon   # test coupon → output/coupon/
+.venv/bin/python projects/arcdroid-coupons/arcdroid_coupons.py           # ArcDroid profile + X2 coupons → output/
 ```
 
 (Run from the project directory; venv setup in README.)
