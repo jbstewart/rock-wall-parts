@@ -1,0 +1,478 @@
+== Parameter information for operation "Squares Center" using strategy "profile2d". ==
+
+name: associatedView
+    title: Associated View
+    expression: "false"
+    isEditable: True
+    isEnabled: True
+    CadObjectParameterValue
+        value: Empty
+
+name: calculationTolerance
+    title: Calculation Tolerance
+    expression: "tolerance"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 0.001
+
+name: chainingTolerance
+    title: Chaining Tolerance
+    expression: "0.01mm"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 0.001
+
+name: clearanceHeight_mode
+    title: From
+    expression: "'from retract height'"
+    isEditable: True
+    isEnabled: True
+    ChoiceParameterValue
+        value: from retract height
+        choices:
+            name: Retract height, value: 'from retract height'
+            name: Top height, value: 'from top'
+            name: Model top, value: 'from surface top'
+            name: Model bottom, value: 'from surface bottom'
+            name: Stock top, value: 'from stock top'
+            name: Stock bottom, value: 'from stock bottom'
+            name: Fixture top, value: 'from fixture top'
+            name: Fixture bottom, value: 'from fixture bottom'
+            name: Selected contour(s), value: 'from contour'
+            name: Selection, value: 'from point'
+            name: Origin (absolute), value: 'from wcs'
+            name: Highest of..., value: 'from highest of'
+            name: Lowest of..., value: 'from lowest of'
+
+name: clearanceHeight_offset
+    title: Offset
+    expression: "2 mm"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 0.2
+
+name: compensation
+    title: Sideways Compensation
+    expression: "'center'"
+    isEditable: True
+    isEnabled: True
+    ChoiceParameterValue
+        value: center
+        choices:
+            name: Left, value: 'left'
+            name: Center, value: 'center'
+            name: Right, value: 'right'
+
+name: contourTolerance
+    title: Contour Linearization Tolerance
+    expression: "tolerance * 0.5"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 0.0005
+
+name: contours
+    title: Contour Selection
+    expression: "true"
+    isEditable: True
+    isEnabled: True
+    CadContours2dParameterValue
+        Curve Selection 1: ChainSelection
+            startExtensionLength: 0.0
+            endExtensionLength: 0.0
+            extensionMethod: 0
+            isOpen: False
+            isOpenAllowed: True
+            endExtensionLength: 0.0
+            isReverted: False
+            extensionType: 1
+            isReverted: False
+            inputGeometry:
+                BRepEdge
+                BRepEdge
+                BRepEdge
+                BRepEdge
+                BRepEdge
+            value:
+                BRepEdge
+                BRepEdge
+                BRepEdge
+                BRepEdge
+                BRepEdge
+        Curve Selection 2: ChainSelection
+            startExtensionLength: 0.0
+            endExtensionLength: 0.0
+            extensionMethod: 0
+            isOpen: False
+            isOpenAllowed: True
+            endExtensionLength: 0.0
+            isReverted: False
+            extensionType: 1
+            isReverted: False
+            inputGeometry:
+                BRepEdge
+                BRepEdge
+                BRepEdge
+                BRepEdge
+                BRepEdge
+            value:
+                BRepEdge
+                BRepEdge
+                BRepEdge
+                BRepEdge
+                BRepEdge
+        Curve Selection 3: ChainSelection
+            startExtensionLength: 0.0
+            endExtensionLength: 0.0
+            extensionMethod: 0
+            isOpen: False
+            isOpenAllowed: True
+            endExtensionLength: 0.0
+            isReverted: False
+            extensionType: 1
+            isReverted: False
+            inputGeometry:
+                BRepEdge
+                BRepEdge
+                BRepEdge
+                BRepEdge
+                BRepEdge
+            value:
+                BRepEdge
+                BRepEdge
+                BRepEdge
+                BRepEdge
+                BRepEdge
+
+name: cuttingMode
+    title: Cutting Mode
+    expression: "'auto'"
+    isEditable: True
+    isEnabled: True
+    ChoiceParameterValue
+        value: auto
+        choices:
+            name: Through - auto, value: 'auto'
+            name: Through - high quality, value: 'slow cut'
+            name: Through - medium quality, value: 'medium cut'
+            name: Through - low quality, value: 'fast cut'
+            name: Etch, value: 'etch'
+            name: Vaporize, value: 'vaporize'
+
+name: doLeadIn
+    title: Lead-In (Entry)
+    expression: "cuttingMode != 'etch'"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: True
+
+name: doLeadOut
+    title: Lead-Out (Exit)
+    expression: "cuttingMode != 'etch'"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: True
+
+name: entryPositions
+    title: Preferred Lead-In Positions
+    expression: "false"
+    isEditable: True
+    isEnabled: True
+    CadObjectParameterValue
+        value: Empty
+
+name: entry_distance
+    title: Lead-In Distance
+    expression: "0.10 in"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 0.254
+
+name: entry_radius
+    title: Lead-In Radius
+    expression: "0"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 0.0
+
+name: entry_sweep
+    title: Lead-In Sweep Angle
+    expression: "90 deg"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 90.0
+
+name: exit_sameAsEntry
+    title: Same as Lead-In
+    expression: "true"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: True
+
+name: featureOperationId
+    title: Feature Operation ID
+    expression: "'none'"
+    isEditable: True
+    isEnabled: True
+    ChoiceParameterValue
+        value: none
+        choices:
+            name: Not in feature, value: 'none'
+            name: Rough, value: 'rough'
+            name: Finish, value: 'finish'
+
+name: finishingOverlap
+    title: Finishing Overlap
+    expression: "0mm"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 0.0
+
+name: group_tabs
+    title: Tabs
+    expression: "false"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: False
+
+name: keepToolDown
+    title: Keep Nozzle Down
+    expression: "false"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: False
+
+name: kerfWidth
+    title: Kerf Width
+    expression: "tool_kerfWidth"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 0.13999999999999999
+
+name: machineQualityControl
+    title: Quality Control
+    expression: "tool_machineQualityControl"
+    isEditable: True
+    isEnabled: True
+    ChoiceParameterValue
+        value: manual
+        choices:
+            name: Machine uses quality, value: 'automatic'
+            name: Machine uses feeds, value: 'manual'
+
+name: pierceClearance
+    title: Pierce Clearance
+    expression: "1.5 mm"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 0.15000000000000002
+
+name: preserveOrder
+    title: Preserve Order
+    expression: "false"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: False
+
+name: retractHeightFromHighest_checkFixture
+    title: Fixture
+    expression: "'top'"
+    isEditable: True
+    isEnabled: True
+    ChoiceParameterValue
+        value: top
+        choices:
+            name: Top, value: 'top'
+            name: Bottom, value: 'bottom'
+            name: Ignore, value: 'ignore'
+
+name: retractHeightFromHighest_checkModel
+    title: Model
+    expression: "'top'"
+    isEditable: True
+    isEnabled: True
+    ChoiceParameterValue
+        value: top
+        choices:
+            name: Top, value: 'top'
+            name: Bottom, value: 'bottom'
+            name: Ignore, value: 'ignore'
+
+name: retractHeightFromHighest_checkStock
+    title: Stock
+    expression: "'top'"
+    isEditable: True
+    isEnabled: True
+    ChoiceParameterValue
+        value: top
+        choices:
+            name: Top, value: 'top'
+            name: Bottom, value: 'bottom'
+            name: Ignore, value: 'ignore'
+
+name: retractHeight_mode
+    title: From
+    expression: "'from highest of'"
+    isEditable: True
+    isEnabled: True
+    ChoiceParameterValue
+        value: from highest of
+        choices:
+            name: Clearance height, value: 'from clearance height'
+            name: Top height, value: 'from top'
+            name: Model top, value: 'from surface top'
+            name: Model bottom, value: 'from surface bottom'
+            name: Stock top, value: 'from stock top'
+            name: Stock bottom, value: 'from stock bottom'
+            name: Fixture top, value: 'from fixture top'
+            name: Fixture bottom, value: 'from fixture bottom'
+            name: Selected contour(s), value: 'from contour'
+            name: Selection, value: 'from point'
+            name: Origin (absolute), value: 'from wcs'
+            name: Highest of..., value: 'from highest of'
+            name: Lowest of..., value: 'from lowest of'
+
+name: retractHeight_offset
+    title: Offset
+    expression: "5mm"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 0.5
+
+name: smoothingFilter
+    title: Smoothing
+    expression: "true"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: True
+
+name: smoothingFilterTolerance
+    title: Smoothing Tolerance
+    expression: "tolerance"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 0.001
+
+name: tolerance
+    title: Tolerance
+    expression: "0.01mm"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 0.001
+
+name: tool_feedCutting
+    title: Cutting Feedrate
+    expression: "2200."
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 2200.0
+
+name: tool_feedEntry
+    title: Lead-In Feedrate
+    expression: "tool_type == 'probe' || tool_isDepositing ? 40inpm:tool_feedCutting"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 2200.0
+
+name: tool_feedExit
+    title: Lead-Out Feedrate
+    expression: "tool_isDepositing ? 40inpm : tool_feedCutting"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 2200.0
+
+name: topHeightFromHighest_checkFixture
+    title: Fixture
+    expression: "'ignore'"
+    isEditable: True
+    isEnabled: True
+    ChoiceParameterValue
+        value: ignore
+        choices:
+            name: Top, value: 'top'
+            name: Bottom, value: 'bottom'
+            name: Ignore, value: 'ignore'
+
+name: topHeightFromHighest_checkModel
+    title: Model
+    expression: "'ignore'"
+    isEditable: True
+    isEnabled: True
+    ChoiceParameterValue
+        value: ignore
+        choices:
+            name: Top, value: 'top'
+            name: Bottom, value: 'bottom'
+            name: Ignore, value: 'ignore'
+
+name: topHeightFromHighest_checkStock
+    title: Stock
+    expression: "'top'"
+    isEditable: True
+    isEnabled: True
+    ChoiceParameterValue
+        value: top
+        choices:
+            name: Top, value: 'top'
+            name: Bottom, value: 'bottom'
+            name: Ignore, value: 'ignore'
+
+name: topHeight_mode
+    title: From
+    expression: "'from highest of'"
+    isEditable: True
+    isEnabled: True
+    ChoiceParameterValue
+        value: from highest of
+        choices:
+            name: Clearance height, value: 'from clearance height'
+            name: Retract height, value: 'from retract height'
+            name: Model top, value: 'from surface top'
+            name: Model bottom, value: 'from surface bottom'
+            name: Stock top, value: 'from stock top'
+            name: Stock bottom, value: 'from stock bottom'
+            name: Fixture top, value: 'from fixture top'
+            name: Fixture bottom, value: 'from fixture bottom'
+            name: Selected contour(s), value: 'from contour'
+            name: Selection, value: 'from point'
+            name: Origin (absolute), value: 'from wcs'
+            name: Highest of..., value: 'from highest of'
+            name: Lowest of..., value: 'from lowest of'
+
+name: topHeight_offset
+    title: Offset
+    expression: "1.5 mm"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 0.15000000000000002
+
+name: useFeedOptimization
+    title: Feed Optimization
+    expression: "false"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: False

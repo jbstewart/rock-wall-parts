@@ -111,6 +111,21 @@ function formatComment(text) {
 }
 
 /**
+  Local calendar date as YYYY-MM-DD.
+
+  toISOString() is UTC, so anything posted after late afternoon US time is
+  stamped with TOMORROW's date - which is confusing on a shop traveller that
+  someone reads the next morning.
+*/
+function localDateStamp() {
+  function pad(n) {
+    return (n < 10 ? "0" : "") + n;
+  }
+  var d = new Date();
+  return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+}
+
+/**
   Output a comment.
 */
 function writeComment(text) {
@@ -137,7 +152,7 @@ function onOpen() {
       header += " REV " + String(properties.partRev).toUpperCase();
     }
     writeComment(header);
-    writeComment("POSTED " + new Date().toISOString().substring(0, 10));
+    writeComment("POSTED " + localDateStamp());
   }
 
   // dump machine configuration

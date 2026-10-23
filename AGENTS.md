@@ -33,6 +33,7 @@ Parametric code-CAD parts library for Rock Wall Forge / Rock Wall Manufacturing 
 .venv/bin/python projects/bonebrake-cover/bonebrake_assembly.py          # real cover → output/
 .venv/bin/python projects/bonebrake-cover/bonebrake_assembly.py coupon   # test coupon → output/coupon/
 .venv/bin/python projects/arcdroid-coupons/arcdroid_coupons.py           # ArcDroid profile + X2 coupons → output/
+python3 tools/fusion-addin/tests/test_rules.py                            # Fusion CAM shop-rule checks (no venv, no Fusion needed)
 ```
 
 (Run from the project directory; venv setup in README.)

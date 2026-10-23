@@ -1,0 +1,53 @@
+{
+  "_comment": "Rock Wall Forge plasma shop profile. Values are in FUSION API UNITS, not document units: lengths in CENTIMETRES, feeds in mm/min, angles in degrees. 0.14 cm = 1.4 mm. Source of truth for WHY: areas/fabrication/ArcDroid-Cut-Profile-Runbook.md in pp-operations.",
+  "_revised": "2026-10-22",
+  "tool": {
+    "description": "ArcDroid Ti65 steel 1/8",
+    "tool_type": "plasma cutter",
+    "tool_kerfWidth": 0.14,
+    "tool_nozzleDiameter": 0.08,
+    "_kerf_note": "Kerf is NOT the nozzle bore. 1.4 mm measured 2026-10-20; the 0.8 mm nozzle figure is the orifice and the arc flares wider. A tool reading 0.12 is Fusion's auto-derived 1.5 x bore default and is wrong."
+  },
+  "setup": {
+    "job_type": "jet",
+    "job_stockMode": "fixedbox",
+    "wcs_origin_mode": "modelOrigin",
+    "forbidden_program_names": [
+      "1001",
+      ""
+    ],
+    "_stock_note": "'default' is Fusion's RELATIVE size box, which pads the stock past the blank. Fixed box only."
+  },
+  "operation": {
+    "tool_feedCutting": 2200.0,
+    "kerfWidth": 0.14,
+    "compensation": "left",
+    "compensationType": "computer",
+    "doLeadIn": true,
+    "entry_radius": 0.0,
+    "entry_sweep": 90.0,
+    "entry_distance_min": 0.05,
+    "pierceClearance_allowed": [
+      0.0508,
+      0.15
+    ],
+    "group_tabs": false,
+    "cuttingMode": "auto",
+    "machineQualityControl": "manual",
+    "_feed_note": "2200 mm/min comes from the '1/8 Steel' preset. The TOOL's own tool_feedCutting is 1000 - reading the tool instead of the operation hides a Default-preset op.",
+    "_pierce_note": "0.0508 cm = 0.020 in, the small-hole floor that lets a 1/8 hole generate with lead-in on. 0.15 cm = 1.5 mm is the stock default for everything else.",
+    "_comp_note": "Left on every op; Fusion derives travel direction, so outer contours run CW and holes CCW and the part always stays right of travel. Center is legal but reported - see rules.py."
+  },
+  "tolerances": {
+    "length_cm": 0.0005,
+    "feed_mmpm": 1.0,
+    "angle_deg": 0.1
+  },
+  "paths": {
+    "_comment": "gcode_post and sheet_post are relative to the repo root. output_folder may use ~.",
+    "gcode_post": "posts/ArcDroid/Arcdroid-cutting-20260713-rwf.cps",
+    "sheet_post": "posts/ArcDroid/rwf-setup-sheet.cps",
+    "output_folder": "~/Library/CloudStorage/Dropbox/RockWallForge/gcode",
+    "_sheet_note": "The setup sheet is POSTED with rwf-setup-sheet.cps, not made with Fusion's right-click Setup Sheet, which is hard-wired to Autodesk's template."
+  }
+}

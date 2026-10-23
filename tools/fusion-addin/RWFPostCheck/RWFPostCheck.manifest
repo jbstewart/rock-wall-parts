@@ -1,0 +1,13 @@
+{
+  "autodeskProduct": "Fusion360",
+  "type": "addin",
+  "id": "rwf-postcheck-2026",
+  "author": "Rock Wall Forge",
+  "description": {
+    "": "Check a plasma setup against the shop rules, then post it."
+  },
+  "version": "1.5.0",
+  "runOnStartup": true,
+  "supportedOS": "mac|windows",
+  "editEnabled": true
+}

@@ -230,3 +230,10 @@ renders/
 .DS_Store
 *-DIAGNOSTIC.*
 FOR_DELETION/
+
+# The Fusion add-in needs its manifest to load at all, and its icon folder to
+# be pinnable to the toolbar - both caught by the blanket *.manifest and *.png
+# rules above. The icons are regenerable (tools/fusion-addin/make_icons.py) but
+# are kept so a fresh clone works without running it.
+!tools/fusion-addin/RWFPostCheck/RWFPostCheck.manifest
+!tools/fusion-addin/RWFPostCheck/resources/**/*.png

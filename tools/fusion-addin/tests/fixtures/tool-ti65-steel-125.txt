@@ -1,0 +1,415 @@
+== Parameter information for tool "ArcDroid Ti65 steel 1/8" ==
+
+name: generate_connections
+    title: Override Connection to Preceding Operation
+    expression: "false"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: False
+
+name: tool_assistGas
+    title: Assist Gas
+    expression: "''"
+    isEditable: True
+    isEnabled: True
+    StringParameterValue
+        value: 
+
+name: tool_bodyLength
+    title: Body Length
+    expression: "tool_shoulderLength"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 0.0
+
+name: tool_breakControl
+    title: Break Control
+    expression: "false"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: False
+
+name: tool_clockwise
+    title: Clockwise Spindle Rotation
+    expression: "false"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: False
+
+name: tool_comment
+    title: Comment
+    expression: "''"
+    isEditable: True
+    isEnabled: True
+    StringParameterValue
+        value: 
+
+name: tool_compensationOffset
+    title: Compensation Offset
+    expression: "tool_number"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 1
+
+name: tool_coolant
+    title: Coolant
+    expression: "(tool_type == 'waterjet' || tool_type == 'laser cutter' || tool_type == 'plasma cutter' || tool_type == 'probe') ? 'disabled' : 'flood'"
+    isEditable: True
+    isEnabled: True
+    ChoiceParameterValue
+        value: disabled
+        choices:
+            name: Disabled, value: 'disabled'
+            name: Flood, value: 'flood'
+            name: Mist, value: 'mist'
+            name: Through tool, value: 'tool'
+            name: Air, value: 'air'
+            name: Air through tool, value: 'air through tool'
+            name: Suction, value: 'suction'
+            name: Flood and mist, value: 'flood mist'
+            name: Flood and through tool, value: 'flood tool'
+
+name: tool_coolantSupport
+    title: Coolant Support
+    expression: "'no'"
+    isEditable: True
+    isEnabled: True
+    ChoiceParameterValue
+        value: no
+        choices:
+            name: No, value: 'no'
+            name: Yes, value: 'yes'
+
+name: tool_cutHeight
+    title: Cut Height
+    expression: "0.0"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 0.0
+
+name: tool_cutPower
+    title: Cut Power
+    expression: "0.0W"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 0.0
+
+name: tool_description
+    title: Description
+    expression: "'ArcDroid Ti65 steel 1/8'"
+    isEditable: True
+    isEnabled: True
+    StringParameterValue
+        value: ArcDroid Ti65 steel 1/8
+
+name: tool_diameter
+    title: Diameter
+    expression: "0.0"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 0.0
+
+name: tool_diameterOffset
+    title: Diameter Offset
+    expression: "tool_number"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 1
+
+name: tool_feedCutting
+    title: Cutting Feedrate
+    expression: "1000."
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 1000.0
+
+name: tool_feedEntry
+    title: Lead-In Feedrate
+    expression: "tool_type == 'probe' || tool_isDepositing ? 1000mmpm : tool_feedCutting"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 1000.0
+
+name: tool_feedExit
+    title: Lead-Out Feedrate
+    expression: "tool_isDepositing ? 1000mmpm : tool_feedCutting"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 1000.0
+
+name: tool_fluteLength
+    title: Flute Length
+    expression: "0.0"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 0.0
+
+name: tool_headClearance
+    title: Head Clearance
+    expression: "1."
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 0.1
+
+name: tool_kerfWidth
+    title: Kerf Width
+    expression: "1.4"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 0.13999999999999999
+
+name: tool_lengthOffset
+    title: Length Offset
+    expression: "tool_number"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 1
+
+name: tool_live
+    title: Live Tool
+    expression: "true"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: True
+
+name: tool_machineQualityControl
+    title: Quality Control
+    expression: "'manual'"
+    isEditable: True
+    isEnabled: True
+    ChoiceParameterValue
+        value: manual
+        choices:
+            name: Machine uses quality, value: 'automatic'
+            name: Machine uses feeds, value: 'manual'
+
+name: tool_manualToolChange
+    title: Manual Tool Change
+    expression: "false"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: False
+
+name: tool_material
+    title: Material
+    expression: "'hss'"
+    isEditable: True
+    isEnabled: True
+    ChoiceParameterValue
+        value: hss
+        choices:
+            name: Unspecified, value: 'unspecified'
+            name: HSS, value: 'hss'
+            name: Ti coated, value: 'ti coated'
+            name: Carbide, value: 'carbide'
+            name: Ceramics, value: 'ceramics'
+
+name: tool_nozzleDiameter
+    title: Nozzle Diameter
+    expression: "0.8"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 0.08000000000000002
+
+name: tool_number
+    title: Number
+    expression: "1"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 1
+
+name: tool_numberOfFlutes
+    title: Number of Flutes
+    expression: "1"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 1
+
+name: tool_overallLength
+    title: Overall Length
+    expression: "((tool_type == 'tapered mill' || tool_type == 'face mill' || tool_type == 'radius mill' || tool_type == 'chamfer mill' || tool_type == 'dovetail mill' || tool_type == 'lollipop mill' || tool_type == 'slot mill') ? (tool_bodyLength * 2) : ((tool_type == 'ball end mill' || tool_type == 'bull nose end mill' || tool_type == 'flat end mill' || tool_type == 'boring bar' || tool_type == 'counter bore' || tool_type == 'center drill' || tool_type == 'spot drill') ? (tool_diameter * 6) : ((tool_type == 'counter sink') ? (tool_diameter * 8) : ((tool_type == 'reamer') ? (tool_diameter * 10) : ((tool_type == 'drill') ? (tool_diameter * 13) : (tool_bodyLength))))))"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 0.0
+
+name: tool_pierceHeight
+    title: Pierce Height
+    expression: "0.0"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 0.0
+
+name: tool_piercePower
+    title: Pierce Power
+    expression: "0.0W"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 0.0
+
+name: tool_pierceTime
+    title: Pierce Time
+    expression: "0.0"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 0.0
+
+name: tool_presetMaterialCategory
+    title: Filter by Type
+    expression: "'all'"
+    isEditable: True
+    isEnabled: True
+    ChoiceParameterValue
+        value: all
+        choices:
+            name: All, value: 'all'
+            name: Metal, value: 'metal'
+            name: Wood, value: 'wood'
+            name: Plastic, value: 'plastic'
+            name: Glass, value: 'glass'
+            name: Ceramic, value: 'ceramic'
+            name: Stone, value: 'stone'
+            name: Fabric, value: 'fabric'
+
+name: tool_presetMaterialQuery
+    title: Filter by Search
+    expression: "''"
+    isEditable: True
+    isEnabled: True
+    StringParameterValue
+        value: 
+
+name: tool_presetMaterialUseHardness
+    title: Filter by hardness
+    expression: "false"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: False
+
+name: tool_pressure
+    title: Pressure
+    expression: "0.0"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 0.0
+
+name: tool_productId
+    title: Product ID
+    expression: "''"
+    isEditable: True
+    isEnabled: True
+    StringParameterValue
+        value: 
+
+name: tool_productLink
+    title: Product Link
+    expression: "''"
+    isEditable: True
+    isEnabled: True
+    StringParameterValue
+        value: 
+
+name: tool_rampAngle
+    title: Ramp Angle
+    expression: "2deg"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 2.0
+
+name: tool_shaftDiameter
+    title: Shaft Diameter
+    expression: "tool_diameter"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 0.0
+
+name: tool_shoulderLength
+    title: Shoulder Length
+    expression: "tool_fluteLength"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 0.0
+
+name: tool_turret
+    title: Turret
+    expression: "0"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 0
+
+name: tool_type
+    title: Type
+    expression: "'plasma cutter'"
+    isEditable: True
+    isEnabled: True
+    ChoiceParameterValue
+        value: plasma cutter
+        choices:
+            name: Flat end mill, value: 'flat end mill'
+            name: Ball end mill, value: 'ball end mill'
+            name: Bull nose end mill, value: 'bull nose end mill'
+
+name: tool_unit
+    title: Unit
+    expression: "'millimeters'"
+    isEditable: True
+    isEnabled: True
+    ChoiceParameterValue
+        value: millimeters
+        choices:
+            name: Millimeters, value: 'millimeters'
+            name: Inches, value: 'inches'
+
+name: tool_vendor
+    title: Vendor
+    expression: "'ArcDroid / Harbor Freight'"
+    isEditable: True
+    isEnabled: True
+    StringParameterValue
+        value: ArcDroid / Harbor Freight
+
+name: use_tool_stepdown
+    title: Use Stepdown
+    expression: "false"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: False
+
+name: use_tool_stepover
+    title: Use Stepover
+    expression: "false"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: False

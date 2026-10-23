@@ -26,9 +26,15 @@ Blank: **12.5 x 6"** drop of 1/8 mild steel. Nothing frees it; it stays a drop.
 
 | Op | Layer | Geometry | Sideways comp | Comp type | Lead-in / out | Pierce clearance | Tabs |
 |---|---|---|---|---|---|---|---|
-| 1 | `SQUARES` | 3 squares (1, 2, 4") | **Center** | — | **both off** | default | none |
-| 2 | `HOLES_SMALL` | 1x 1/8" hole | **Left** | **In computer** | **in: 0.020 linear, perpendicular, radius 0** | **0.020 in (0.5 mm)** | none |
-| 3 | `HOLES` | 4x 3/16, 1/4, 5/16, 3/8" | **Left** | **In computer** | stock | default 0.059 in (1.5 mm) | none |
+| 1 | `HOLES_SMALL` | 1x 1/8" hole | **Left** | **In computer** | **in: 0.020 linear, perpendicular, radius 0** | **0.020 in (0.5 mm)** | none |
+| 2 | `HOLES` | 4x 3/16, 1/4, 5/16, 3/8" | **Left** | **In computer** | stock | default 0.059 in (1.5 mm) | none |
+| 3 | `SQUARES` | 3 squares (1, 2, 4") | **Center** | — | **both off** | default | none |
+
+**Keep them in that order in the browser tree.** The hole column is the measurement
+most sensitive to plate condition, so it gets pierced into cold, flat, fully-supported
+steel before three big squares have dumped heat into the drop. The squares go last
+because their slugs drop free: once a 4" slug is loose, every later traverse is a
+chance for it to tip into the torch. If slugs do tip, raise Clear Z to 5 mm.
 
 Center comp on the squares is deliberate and is the whole point of op 1: the torch
 runs ON the drawn line, so the slug comes out one kerf under and the hole one kerf
@@ -47,6 +53,11 @@ Blank: **1.25 x 42"** 1/8 mild steel flat bar. Nothing frees it.
 |---|---|---|---|---|---|---|---|
 | 1 | `HOLES` | 2x 1/4" at X=20 and 22 | **Left** | **In computer** | stock | default 0.059 in (1.5 mm) | none |
 | 2 | `LINE` | 1 open line, X 16 to 26 | **none** (open contour) | — | **off** | default | none |
+
+Op order is not critical here — two 1/4" holes put almost no heat in. Clamping is:
+this is a 42" strip, the shape the runbook warns buckles, and a bar that moves
+mid-program invalidates every number on it. Clamp along its length, and lock the
+slide again after the X2 move.
 
 **The X2 split is NOT in this geometry.** Set it in SimpleTrace at **533 mm** (21").
 The line is drawn straight through that station on purpose — the step you are

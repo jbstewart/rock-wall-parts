@@ -1,0 +1,340 @@
+== Parameter information for setup "Setup" ==
+
+name: additiveMachineTechnology
+    title: Which Additive Technology is the machine of
+    expression: "'UNKNOWN'"
+    isEditable: True
+    isEnabled: True
+    StringParameterValue
+        value: UNKNOWN
+
+name: arrange_setup
+    title: 
+    expression: "false"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: False
+
+name: associatedView
+    title: Associated View
+    expression: "false"
+    isEditable: True
+    isEnabled: True
+    CadObjectParameterValue
+        value: Empty
+
+name: axialFixtureClearanceSetup
+    title: Axial Clearance
+    expression: "5 mm"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 0.5
+
+name: job_fixture
+    title: Fixture
+    expression: "false"
+    isEditable: True
+    isEnabled: True
+    CadObjectParameterValue
+        value: Empty
+
+name: job_fixtureAttachment
+    title: Fixture Attachment
+    expression: "false"
+    isEditable: True
+    isEnabled: True
+    CadObjectParameterValue
+        value: Empty
+
+name: job_groundStockModelOrigin
+    title: Ground Stock at Model Origin
+    expression: "false"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: False
+
+name: job_model
+    title: Model
+    expression: "true"
+    isEditable: True
+    isEnabled: True
+    CadObjectParameterValue
+        value:
+            BRepBody
+
+name: job_multipleWorkOffsets
+    title: Multiple WCS Offsets
+    expression: "false"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: False
+
+name: job_positionAttach
+    title: Table Attach Point
+    expression: "false"
+    isEditable: True
+    isEnabled: True
+    CadObjectParameterValue
+        value: Empty
+
+name: job_positionReference_origin_boxPoint
+    title: Bounding Box Point
+    expression: "'bottom center'"
+    isEditable: True
+    isEnabled: True
+    ChoiceParameterValue
+        value: bottom center
+        choices:
+            name: Top center, value: 'top center'
+            name: Top corner 1, value: 'top 1'
+            name: Top corner 2, value: 'top 2'
+            name: Top corner 3, value: 'top 3'
+            name: Top corner 4, value: 'top 4'
+            name: Top side 1, value: 'top side 1'
+            name: Top side 2, value: 'top side 2'
+            name: Top side 3, value: 'top side 3'
+            name: Top side 4, value: 'top side 4'
+            name: Center, value: 'center'
+            name: Middle side 1, value: 'middle side 1'
+            name: Middle side 2, value: 'middle side 2'
+            name: Middle side 3, value: 'middle side 3'
+            name: Middle side 4, value: 'middle side 4'
+            name: Middle corner 1, value: 'middle 1'
+            name: Middle corner 2, value: 'middle 2'
+            name: Middle corner 3, value: 'middle 3'
+            name: Middle corner 4, value: 'middle 4'
+            name: Bottom center, value: 'bottom center'
+            name: Bottom corner 1, value: 'bottom 1'
+            name: Bottom corner 2, value: 'bottom 2'
+            name: Bottom corner 3, value: 'bottom 3'
+            name: Bottom corner 4, value: 'bottom 4'
+            name: Bottom side 1, value: 'bottom side 1'
+            name: Bottom side 2, value: 'bottom side 2'
+            name: Bottom side 3, value: 'bottom side 3'
+            name: Bottom side 4, value: 'bottom side 4'
+
+name: job_positionReference_origin_mode
+    title: Part Attach Point
+    expression: "'fixturePoint'"
+    isEditable: True
+    isEnabled: True
+    ChoiceParameterValue
+        value: fixturePoint
+        choices:
+            name: Selected point, value: 'point'
+            name: Model box point, value: 'modelPoint'
+            name: Fixture box point, value: 'fixturePoint'
+            name: Stock box point, value: 'stockPoint'
+
+name: job_positionXOffset
+    title: X Distance
+    expression: "0in"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 0.0
+
+name: job_positionYOffset
+    title: Y Distance
+    expression: "0in"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 0.0
+
+name: job_positionZOffset
+    title: Z Distance
+    expression: "0in"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 0.0
+
+name: job_probeWorkOffset
+    title: Probe WCS override
+    expression: "job_workOffset"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 0
+
+name: job_programComment
+    title: Program Comment
+    expression: "''"
+    isEditable: True
+    isEnabled: True
+    StringParameterValue
+        value: 
+
+name: job_programName
+    title: Program Name/Number
+    expression: "'1001'"
+    isEditable: True
+    isEnabled: True
+    StringParameterValue
+        value: 1001
+
+name: job_stockFixedRoundingValue
+    title: Round Up to Nearest
+    expression: "((job_stockMode == 'default') || (job_stockMode == 'relativecylinder') || (job_stockMode == 'relativetube')) ? 0.0mm : 0.5in"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 1.27
+
+name: job_stockFixedX
+    title: Width (X)
+    expression: "Math.ceilto(surfaceXHigh - surfaceXLow; job_stockFixedRoundingValue)"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 31.75
+
+name: job_stockFixedXMode
+    title: Model Position
+    expression: "job_groundStockModelOrigin ? 'model' : 'center'"
+    isEditable: True
+    isEnabled: True
+    ChoiceParameterValue
+        value: center
+        choices:
+            name: Offset from left side (-X), value: 'left'
+            name: Center, value: 'center'
+            name: Offset from right side (+X), value: 'right'
+            name: Offset from model origin, value: 'model'
+
+name: job_stockFixedY
+    title: Depth (Y)
+    expression: "Math.ceilto(surfaceYHigh - surfaceYLow; job_stockFixedRoundingValue)"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 15.239999999999998
+
+name: job_stockFixedYMode
+    title: Model Position
+    expression: "job_groundStockModelOrigin ? 'model' : 'center'"
+    isEditable: True
+    isEnabled: True
+    ChoiceParameterValue
+        value: center
+        choices:
+            name: Offset from back side (+Y), value: 'back'
+            name: Center, value: 'center'
+            name: Offset from front side (-Y), value: 'front'
+            name: Offset from model origin, value: 'model'
+
+name: job_stockFixedZ
+    title: Height (Z)
+    expression: "0.12500 in"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 0.3175
+
+name: job_stockFixedZMode
+    title: Model Position
+    expression: "job_groundStockModelOrigin ? 'model' : 'center'"
+    isEditable: True
+    isEnabled: True
+    ChoiceParameterValue
+        value: center
+        choices:
+            name: Offset from top (+Z), value: 'top'
+            name: Center, value: 'center'
+            name: Offset from bottom (-Z), value: 'bottom'
+            name: Offset from model origin, value: 'model'
+
+name: job_stockMode
+    title: Mode
+    expression: "'fixedbox'"
+    isEditable: True
+    isEnabled: True
+    ChoiceParameterValue
+        value: fixedbox
+        choices:
+            name: Fixed size box, value: 'fixedbox'
+            name: Relative size box, value: 'default'
+            name: Fixed size cylinder, value: 'fixedcylinder'
+            name: Relative size cylinder, value: 'relativecylinder'
+            name: Fixed size tube, value: 'fixedtube'
+            name: Relative size tube, value: 'relativetube'
+            name: From solid, value: 'solid'
+            name: From arrange, value: 'arrange'
+            name: From bounding solid, value: 'boundingSolid'
+            name: From preceding setup, value: 'previoussetup'
+
+name: job_type
+    title: Operation Type
+    expression: "'jet'"
+    isEditable: True
+    isEnabled: True
+    ChoiceParameterValue
+        value: jet
+        choices:
+            name: Milling, value: 'milling'
+            name: Turning or mill/turn, value: 'turning'
+            name: Cutting, value: 'jet'
+            name: Additive, value: 'additive'
+            name: CMM Inspection, value: 'cmm-inspection'
+
+name: job_workOffset
+    title: WCS Offset
+    expression: "0"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 0
+
+name: job_workingModel
+    title: Manufacturing Model
+    expression: "'default'"
+    isEditable: True
+    isEnabled: True
+    ChoiceParameterValue
+        value: default
+        choices:
+            name: <Default>, value: 'default'
+
+name: radialFixtureClearanceSetup
+    title: Radial Clearance
+    expression: "5 mm"
+    isEditable: True
+    isEnabled: True
+    FloatParameterValue
+        value: 0.5
+
+name: wcs_orientation_mode
+    title: Orientation
+    expression: "(job_type!='turning') ? ('modelOrientation'): ('axesXZ')"
+    isEditable: True
+    isEnabled: True
+    ChoiceParameterValue
+        value: modelOrientation
+        choices:
+            name: Model orientation, value: 'modelOrientation'
+            name: Z axis/plane & X axis, value: 'axesZX'
+            name: Z axis/plane & Y axis, value: 'axesZY'
+            name: X & Y axes, value: 'axesXY'
+            name: Z axis/plane & X point, value: 'axesXZ'
+            name: Coordinate system, value: 'coordinateSystem'
+            name: From arrange, value: 'fromArrange'
+
+name: wcs_origin_mode
+    title: Origin
+    expression: "'modelOrigin'"
+    isEditable: True
+    isEnabled: True
+    ChoiceParameterValue
+        value: modelOrigin
+        choices:
+            name: Model origin, value: 'modelOrigin'
+            name: Selected point, value: 'point'
+            name: Model box point, value: 'modelPoint'
+            name: Stock box point, value: 'stockPoint'
+            name: From arrange, value: 'fromArrange'
+            name: Reference operation selection, value: 'refOpSelection'
