@@ -215,10 +215,26 @@ def check_operation(op: dict, profile: dict) -> list[Finding]:
         out.append(Finding(REPORT, name, "cuttingMode", mode, want["cuttingMode"],
                            "not a through-auto cut"))
 
-    if mode != "etch":
-        if _get(p, "doLeadIn") is False:
+    # Lead rules are about protecting a FINISHED EDGE, so they only bite on
+    # closed contours. An open contour - a scribe line, a trim cut - has no
+    # enclosed edge to crater, and the runbook specifies leads off for one.
+    all_open = bool(chains) and all(ch.is_open for ch in chains)
+    if mode != "etch" and _get(p, "doLeadIn") is False:
+        if all_open:
+            # Pierce Clearance still steps the pierce off the path even with
+            # the lead-in off: the flat-bar line pierces 2.2 mm clear, which
+            # is clearance 1.5 plus half the 1.4 kerf. Worth stating, not
+            # worth blocking.
+            out.append(Finding(REPORT, name, "doLeadIn", False, True,
+                               "leads off on an open contour - normal; pierce clearance "
+                               "still steps the pierce off the path"))
+        else:
             out.append(Finding(BLOCK, name, "doLeadIn", False, True,
                                "lead-in off puts the pierce crater on the finished edge"))
+
+    # With the lead-in off, its distance, radius and sweep are inert. Checking
+    # them just buries the real findings.
+    if mode != "etch" and _get(p, "doLeadIn") is not False:
         dist = _get(p, "entry_distance")
         if dist is not None and dist < want["entry_distance_min"] - tol["length_cm"]:
             out.append(Finding(BLOCK, name, "entry_distance", f"{dist*10:.3f} mm",

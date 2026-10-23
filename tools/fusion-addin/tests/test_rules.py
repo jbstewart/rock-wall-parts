@@ -122,6 +122,24 @@ f = rules.check_operation(fixed, PROFILE)
 expect("feed now comes from the preset", fixed["params"]["tool_feedCutting"], 2200.0)
 expect("only the empty selection remains", [x.param for x in f], ["contours"])
 
+print("\n== open contour with leads off ==")
+# The flat bar's scribe line: one open contour, leads off by the runbook's own
+# spec. Lead rules protect a finished edge, so an open contour has nothing for
+# them to protect - and with the lead-in off, its distance/radius/sweep are
+# inert and only bury the real findings.
+line_params = dict(small["params"], doLeadIn=False, entry_distance=0.0, entry_sweep=0.0)
+line_op = {"name": "Cut Line", "params": line_params, "notes": "",
+           "contours": [rules.Chain(is_open=True, geometry=["BRepEdge"])]}
+f = rules.check_operation(line_op, PROFILE)
+expect("nothing blocks", rules.blocking(f), [])
+expect("one report, the leads", [x.param for x in f], ["doLeadIn"])
+
+# the same settings on a CLOSED contour are a real defect
+hole_op = dict(line_op, name="Cut Holes",
+               contours=[rules.Chain(is_open=False, geometry=["BRepEdge"])])
+f = rules.check_operation(hole_op, PROFILE)
+expect("closed contour still blocks", [x.param for x in rules.blocking(f)], ["doLeadIn"])
+
 print("\n== whole job ==")
 all_f = rules.check_job({"name": setup["name"], "params": setup["params"]},
                         [small, other, squares],
